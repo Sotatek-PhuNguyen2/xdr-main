@@ -17,7 +17,7 @@ namespace :xdr do
       paths,
       output_dir: "docs/build",
       namespace:  "tokend",
-      language:   :go
+      language:   :openapi
     )
     compilation.compile
   end

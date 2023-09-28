@@ -1,8 +1,0 @@
-14e381fc81ab4f0369406b6055efe42cb9b58330		branch 'dart' of https://github.com/tokend/xdrgen
-6ad4fbe9e0013a947f18e76743f6f7bec67b290c		branch 'feature/cpp_support' of https://github.com/tokend/xdrgen
-b8158b0aadc01a16500560f59d6b4877c329f455		branch 'feature/docstrings' of https://github.com/tokend/xdrgen
-a2feb40848ad51151d07dc97e89b27dcaec535d7		branch 'feature/kotlin_decode' of https://github.com/tokend/xdrgen
-523a3c8bcf62041a13c9e6a25909a837c9ee9073		branch 'fix/go-flags-gen' of https://github.com/tokend/xdrgen
-1dabbd39bad44f55be9bb8df8141eaeb3f7c4dfc		branch 'fix/js_union_switch_default_branch' of https://github.com/tokend/xdrgen
-80d539c45c75b111a9d5ee6889cdd70b4ee720e1		branch 'master' of https://github.com/tokend/xdrgen
-17c29712d0d058d752637030128a7a1c43730d67	not-for-merge	tag 'v0.0.1' of https://github.com/tokend/xdrgen
