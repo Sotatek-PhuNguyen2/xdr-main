@@ -113,6 +113,11 @@ case OFFER_ENTRY:
         uint64 offerID;
         AccountID ownerID;
     } offer;
+case REDEEM_ENTRY:
+    struct {
+        uint64 redeemID;
+        AccountID ownerID;
+    } redeem;
 case REVIEWABLE_REQUEST:
     struct {
         uint64 requestID;
