@@ -1,0 +1,3013 @@
+paths:
+  /accountRulesResources:
+    get:
+      tags:
+        - Account Rules
+      x-item-type: entry
+      summary: Account Rules Resources
+      description: |
+                    Describes the resources on which the account can perform an action.
+      x-code-samples:
+        - lang: "XDR"
+          source: | 
+            //: Describes properties of some entries that can be used to restrict the use of entries
+            union AccountRuleResource switch (LedgerEntryType type)
+            {
+            case ASSET:
+                //: Describes properties which are equal to managed asset entry fields
+                struct
+                {
+                    AssetCode assetCode;
+                    uint64 assetType;
+  
+                    EmptyExt ext;
+                } asset;
+            case REVIEWABLE_REQUEST:
+                //: Describes properties which are equal to managed reviewable request entry fields
+                struct
+                {
+                    //: Describes properties of some reviewable request types that
+                    //: can be used to restrict the using of reviewable requests
+                    ReviewableRequestResource details;
+  
+                    //: reserved for future extension
+                    EmptyExt ext;
+                } reviewableRequest;
+            case ANY:
+                void;
+            case OFFER_ENTRY:
+                //: Describes properties which are equal to managed offer entry fields and their properties
+                struct
+                {
+                    //: type of base asset
+                    uint64 baseAssetType;
+                    //: type of quote asset
+                    uint64 quoteAssetType;
+  
+                    //: code of base asset
+                    AssetCode baseAssetCode;
+                    //: code of quote asset
+                    AssetCode quoteAssetCode;
+  
+                    bool isBuy;
+  
+                    //: reserved for future extension
+                    EmptyExt ext;
+                } offer;
+            case SALE:
+                //: Describes properties which are equal to managed offer entry fields
+                struct
+                {
+                    uint64 saleID;
+                    uint64 saleType;
+  
+                    //: reserved for future extension
+                    EmptyExt ext;
+                } sale;
+            case ATOMIC_SWAP_BID:
+                struct
+                {
+                    uint64 assetType;
+                    AssetCode assetCode;
+  
+                    EmptyExt ext;
+                } atomicSwapBid;
+            case KEY_VALUE:
+                struct
+                {
+                    //: prefix of key
+                    longstring keyPrefix;
+  
+                    //: reserved for future extension
+                    EmptyExt ext;
+                } keyValue;
+            default:
+                //: reserved for future extension
+                EmptyExt ext;
+            };
+  
+            //: Describes properties of some reviewable request types that
+            //: can be used to restrict the using of reviewable requests
+            union ReviewableRequestResource switch (ReviewableRequestType requestType)
+            {
+            case CREATE_SALE:
+                //: is used to restrict using of reviewable request with create_sale type
+                struct
+                {
+                    //: type of sale
+                    uint64 type;
+  
+                    //: reserved for future extension
+                    EmptyExt ext;
+                } createSale;
+            case CREATE_ISSUANCE:
+                //: is used to restrict using of reviewable request with create_issuance type
+                struct
+                {
+                    //: code of asset
+                    AssetCode assetCode;
+                    //: type of asset
+                    uint64 assetType;
+  
+                    //: reserved for future extension
+                    EmptyExt ext;
+                } createIssuance;
+            case CREATE_WITHDRAW:
+                //: is used to restrict using of reviewable request with create_withdraw type
+                struct
+                {
+                    //: code of asset
+                    AssetCode assetCode;
+                    //: type of asset
+                    uint64 assetType;
+  
+                    //: reserved for future extension
+                    EmptyExt ext;
+                } createWithdraw;
+            default:
+                //: reserved for future extension
+                EmptyExt ext;
+            };
+      operationId: AccountRuleResource
+      parameters:
+      - name: AccountRuleResource
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/AccountRuleResource'
+  /createAssetCreationRequest:
+    get:
+      tags:
+        - Assets
+      summary: Create Request For Asset Creation
+      description: |
+                    Allows to create or update `CREATE_ASSET` reviewable request
+                    `CREATE_ASSET` request is used to create asset entry
+  
+                    #### Account Role Requirements
+                      | Account | Resource Type | Rule Action         |  Condition           |
+                      | --------|:-------------:| :-----------------: | ------------         |
+                      | source  | `ASSET`       | `CREATE`            | `allTasks` == `null` |
+                      | source  | `ASSET`       | `CREATE_WITH_TASKS` | `allTasks` != `null` |
+  
+                    #### Signer Role Requirements
+                      | Resource Type | Rule Action | Details |
+                      |:-------------:| -----------:| --------|
+                      | `ASSET`       | `CREATE`    | Resource includes code and type of asset |
+      operationId: createAssetCreationRequest
+      x-item-type: operation
+      parameters:
+      - name: Manage Asset Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManageAssetOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageAssetResult'
+  /assetPairResource:
+    get:
+      tags:
+        - Asset Pairs
+      x-item-type: entry
+      summary: Asset Pair Resources
+      description: |
+                    Describes the asset pairs as a set of properties and policies for two particular assets (i.e. base and quote assets).
+      x-code-samples:
+        - lang: "XDR"
+          source: |
+              //: Policies that could be applied to AssetPair entry and define applicable operations for AssetPair
+              enum AssetPairPolicy
+              {
+                  //: If not set pair can not be traded on secondary market
+                  TRADEABLE_SECONDARY_MARKET = 1,
+                  //: If set, then prices for new offers must be greater then physical price with correction
+                  PHYSICAL_PRICE_RESTRICTION = 2,
+                  //: if set, then price for new offers must be in interval of (1 ± maxPriceStep)*currentPrice
+                  CURRENT_PRICE_RESTRICTION = 4
+              };
+  
+              //: `AssetPairEntry` is used in system to group different assets into pairs and set particular policies and properties for them
+              struct AssetPairEntry
+              {
+                  //: Code of base asset of the asset pair
+                  AssetCode base;
+                  //: Code of quote asset of the asset pair
+                  AssetCode quote;
+  
+                  //: defines an asset pair price as quote asset divided by base asset (i.e., amount of quote asset per 1 base asset)
+                  int64 currentPrice;
+                  //: Price of the asset pair assigned on creation. Can only be updated by application
+                  //: the `ManageAssetPair` operation with action `UPDATE_PRICE`
+                  int64 physicalPrice;
+  
+                  //: Price of the asset pair assigned on creation. Can only be updated by application
+                  //: the `ManageAssetPair` operation with action `UPDATE_PRICE`
+                  int64 physicalPriceCorrection;
+  
+                  //: Max price step in percent. User is allowed to set offer only if both of
+                  //: `price < (1 - maxPriceStep) * currentPrice` and `price > (1 + maxPriceStep) * currentPrice` are `true`
+                  int64 maxPriceStep;
+  
+                  //: Bitmask of asset policies set by creator or corrected by `ManageAssetPair` operations
+                  int32 policies;
+  
+                  // reserved for future use
+                  union switch (LedgerVersion v)
+                  {
+                    case EMPTY_VERSION:
+                      void;
+                  }
+                  ext;
+              };
+      operationId: assetPairResource
+      parameters:
+        - name: AssetPair
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/AssetPairEntry'
+  /assetResource:
+    get:
+      tags:
+        - Assets
+      x-item-type: entry
+      summary: Asset Resources
+      description: |
+        Describes the asset pairs as a set of properties and policies for two particular assets (i.e. base and quote assets).
+      x-code-samples:
+        - lang: "XDR"
+          source: |
+  
+            enum AssetPolicy
+            {
+              //: Defines whether or not asset can be transfered using payments
+            	TRANSFERABLE = 1,
+            	//: Defines whether or not asset is considered base
+            	BASE_ASSET = 2,
+            	//: [[Deprecated]]
+            	STATS_QUOTE_ASSET = 4,
+            	//: Defines whether or not asset can be withdrawed from the system
+            	WITHDRAWABLE = 8,
+            	//: Defines whether or not manual review for issuance of asset is required
+            	ISSUANCE_MANUAL_REVIEW_REQUIRED = 16,
+            	//: Defines whether or not asset can be base in atomic swap
+            	CAN_BE_BASE_IN_ATOMIC_SWAP = 32,
+            	//: Defines whether or not asset can be quote in atomic swap
+            	CAN_BE_QUOTE_IN_ATOMIC_SWAP = 64
+            };
+  
+  
+            struct AssetEntry
+            {
+              //: Code of the asset
+              AssetCode code;
+              //: Owner(creator) of the asset
+            	AccountID owner;
+            	//: Account responsible for preissuance of the asset
+            	AccountID preissuedAssetSigner;
+                //: Arbitrary stringified JSON object that can be used to attach data to asset
+            	longstring details;
+            	//: Maximal amount of tokens that can be issued
+            	uint64 maxIssuanceAmount;
+            	//: Amount of tokens available for issuance
+            	uint64 availableForIssueance;
+            	//: Amount of tokens issued already
+            	uint64 issued;
+            	//: Amount of tokens to be issued which is locked. `pendingIssuance+issued <= maxIssuanceAmount`
+            	uint64 pendingIssuance;
+            	//: Policies of the asset
+              uint32 policies;
+              //: Used to restrict usage. Used in account rules
+              uint64 type;
+              //: Number of decimal places. Must be <= 6
+              uint32 trailingDigitsCount;
+  
+              //: Reserved for future use
+              EmptyExt ext;
+            };
+      operationId: assetResource
+      parameters:
+        - name: Asset
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/AssetEntry'
+  /createAssetUpdateRequest:
+    get:
+      tags:
+        - Assets
+      summary: Create Request To Update Asset
+      description: |
+                    Allows to create or update `UPDATE_ASSET` reviewable request
+                    `UPDATE_ASSET` request is used to update asset entry
+  
+                    #### Account Role Requirements
+                      | Account        | Resource Type | Reviewable Request Type | Action  | Condition |
+                      | ------------- |:-------------:| -----:| -----: | -----: |
+                      | source      | `REVIEWABLE_REQUEST` | `UPDATE_ASSET` | `CREATE`            | `allTasks` == `null` |
+                      | source      | `REVIEWABLE_REQUEST` | `UPDATE_ASSET` | `CREATE_WITH_TASKS` | `allTasks` != `null` |
+  
+                    #### Signer Role Requirements
+                      | Resource Type | Rule Action | Details |
+                      |:-------------:| -----------:| --------|
+                      | `ASSET`       | `UPDATE`    | Resource includes code and type of asset |
+      operationId: createAssetUpdateRequest
+      x-item-type: operation
+      parameters:
+      - name: Manage Asset Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManageAssetOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageAssetResult'
+  /bindExternalSystemAccountIDOp:
+    get:
+      tags:
+        - External Systems
+      summary: Bind External System Account ID
+      description: |
+        Allows to bind source account to external system account ID pool.
+        Only binded account can do deposits.
+  
+        #### Account Role Requirements
+          | Account | Resource Type | Action  |
+          | --------|:-------------:|:------:|
+          | source  | `EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY` | `BIND` |
+  
+        #### Signer Role Requirements
+          | Resource Type | Action  |
+          |:-------------:| -----:|
+          | `EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY` | `BIND` |
+      operationId: bindExternalSystemAccountIdOp
+      x-item-type: operation
+      parameters:
+      - name: BindExternalSystemAccountIdOp
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/BindExternalSystemAccountIdOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/BindExternalSystemAccountIdResult'
+  /cancelAssetRequest:
+    get:
+      tags:
+        - Assets
+      summary: Cancel Asset Request
+      description: |
+                    Allows to cancel `CREATE_ASSET` or `UPDATE_ASSET` reviewable request
+                    #### Account Role Requirements
+                      No account rule required because only requestor can remove own request
+  
+                    #### Signer Role Requirements
+                      | Resource Type | Rule Action | Details |
+                      |:-------------:| -----------:| --------|
+                      | `ASSET`       | `CANCEL`    | Resource includes code and type of asset |
+      operationId: cancelAssetRequest
+      x-item-type: operation
+      parameters:
+      - name: Manage Asset Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManageAssetOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageAssetResult'
+  /cancelAtomicSwapAskOp:
+    get:
+      tags:
+        - Atomic Swap
+      summary: Cancel Atomic Swap Ask Op
+      description: |
+          Allows to cancel atomic swap bid. If atomic swap bid has non zero locked amount
+          (it means that `CREATE_ATOMIC_SWAP_BID` request is being processed).
+          It will be marked as canceled and will be removed after all
+          `CREATE_ATOMIC_SWAP_BID` request will be approved of permament rejected.
+  
+          #### Account Role Requirements
+            No account rule required because only bid owner can perform such operation.
+  
+          #### Signer Role Requirements
+            | Resource Type     | Action  |
+            |:-----------------:|:-------:|
+            | `ATOMIC_SWAP_ASK` | `CANCEL` |
+      operationId: cancelAtomicSwapAskOp
+      x-item-type: operation
+      parameters:
+      - name: Cancel Atomic Swap Ask Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/CancelAtomicSwapAskOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CancelAtomicSwapAskResult'
+  /cancelChangeRoleRequestOp:
+    get:
+      tags:
+        - KYC
+      summary: Cancel change role request
+      description: |
+        Allows to cancel change role reviewable request
+        #### Account Role Requirements
+          Only reviewable request creator can cancel request
+        #### Signer Role Requirements
+  
+          | Resource Type | Reviewable Request Type | Action  |
+          |:-------------:| -----:| -----: |
+          | `REVIEWABLE_REQUEST` | `CHANGE_ROLE` | `CANCEL` |
+      operationId: cancelChangeRoleRequestOp
+      x-item-type: operation
+      parameters:
+      - name: CancelChangeRoleRequestOp
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/CancelChangeRoleRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CancelChangeRoleRequestResult'
+  /cancelCloseDeferredPaymentRequestOp:
+    get:
+      tags:
+        - Deferred payment
+      summary: Close deferred payment request
+      description: |
+        Allow to unlock and send money from existing deferred payment
+  
+        #### Signer Role Requirements
+          | Resource Type | ReviewableRequestType | Action |
+          |:-------------:|:-------:|:--------:|
+          | `REVIEWABLE_REQUEST` | `CLOSE_DEFERRED_PAYMENT` | `CANCEL` |
+  
+      operationId: cancelCloseDeferredPaymentRequestOp
+      x-item-type: operation
+      parameters:
+        - name: CancelCloseDeferredPaymentRequestOp
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/CancelCloseDeferredPaymentRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CancelCloseDeferredPaymentRequestOp'
+  /cancelCreatePollRequest:
+    get:
+      tags:
+        - Polls
+      summary: Cancel Request For Poll Cretion
+      description: |
+                    Allows to cancel (remove) `CREATE_POLL` reviewable request
+  
+                    #### Account Role Requirements
+                      Only `CREATE_POLL` request creator can cancel request
+  
+                    #### Signer Role Requirements
+                      | Resource Type        | Reviewable Request Type | Rule Action |
+                      |:--------------------:|:-----------------------:| -----------:|
+                      | `REVIEWABLE_REQUEST` | `CREATE_POLL`           | `CANCEL`    |
+      operationId: cancelCreatePollRequest
+      x-item-type: operation
+      parameters:
+      - name: Manage Create Poll Request Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManageCreatePollRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageCreatePollRequestResult'
+  /cancelDeferredPaymentCreationRequestOp:
+    get:
+      tags:
+        - Deferred payment
+      summary: Cancel create deferred payment request
+      description: |
+        #### Signer Role Requirements
+          | Resource Type | ReviewableRequestType | Action |
+          |:-------------:|:-------:|:--------:|
+          | `REVIEWABLE_REQUEST` | `CREATE_DEFERRED_PAYMENT` | `CANCEL` |
+  
+      operationId: createDeferredPaymentCreationRequestOp
+      x-item-type: operation
+      parameters:
+        - name: CancelDeferredPaymentCreationRequestOp
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/CancelDeferredPaymentCreationRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CancelDeferredPaymentCreationRequestOp'
+  /cancelPoll:
+    get:
+      tags:
+        - Polls
+      summary: Cancel Poll
+      description: |
+                    Allows to cancel poll. Only admin or poll owner can cancel poll.
+  
+                    #### Account Role Requirements
+                      | Account | Resource Type | Rule Action |
+                      | --------|:-------------:|:-----------:|
+                      | source  | `POLL`        | `CANCEL`    |
+  
+                    #### Signer Role Requirements
+                      | Resource Type  | Rule Action |
+                      |:--------------:|:-----------:|
+                      | `POLL`         | `CANCEL`    |
+      operationId: closePoll
+      x-item-type: operation
+      parameters:
+      - name: Manage Poll Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManagePollOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManagePollResult'
+  /cancelSaleCreationRequestOp:
+    get:
+      tags:
+        - Sale
+      summary: Cancel sale creation request
+      description: |
+        Allows to cancel creation of the sale
+        #### Account Role Requirements
+          Only sale creator can cancel request
+        #### Signer Role Requirements
+  
+          | Resource Type | Reviewable Request Type | Action  |
+          |:-------------:| -----:| -----: |
+          | `REVIEWABLE_REQUEST` | `CREATE_SALE` | `CANCEL` |
+      operationId: cancelSaleCreationRequestOp
+      x-item-type: operation
+      parameters:
+      - name: CancelSaleCreationRequestOp
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/CancelSaleCreationRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CancelSaleCreationRequestResult'
+  /changePreIssuedAssetSigner:
+    get:
+      tags:
+        - Assets
+      summary: Change current pre issuer of asset
+      description: |
+                    Allows to change asset pre issuer
+                    #### Account Role Requirements
+                      No account rule required because only current asset pre issuer can change asset pre issuer
+  
+                    #### Signer Role Requirements
+                      No signer rule required because only current asset pre issuer can change asset pre issuer
+      operationId: changePreIssuedAssetSigner
+      x-item-type: operation
+      parameters:
+      - name: Manage Asset Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManageAssetOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageAssetResult'
+  /checkSaleStateOp:
+    get:
+      tags:
+        - Sale
+      summary: Check sale state
+      description: |
+        Allows to check sale state. If sale reached hard cap or end time has come and reached soft cap, it will be closed
+        and exchange between sale owner and participants will be performed.
+        #### Account Role Requirements
+          | Account        | Resource Type| Action  |
+          | ------------- |:-------------:| -----:|
+          | source      | `SALE` | `CHECK` |
+  
+        #### Signer Role Requirements
+  
+          | Resource Type | Action  |
+          |:-------------:| -----:|
+          | `SALE` | `CHECK` |
+      operationId: checkSaleStateOp
+      x-item-type: operation
+      parameters:
+      - name: CheckSaleStateOp
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/CheckSaleStateOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CheckSaleStateResult'
+  /createCloseDeferredPaymentRequestOp:
+    get:
+      tags:
+        - Deferred payment
+      summary: Close deferred payment request
+      description: |
+        Allow to unlock and send money from existing deferred payment
+  
+        #### Account Role Requirements
+          | Account | Resource Type   | Reviewable Request Type | Action | Condition |
+          | --------|:---------------:|:-------:|:--------:|:-------:|
+          | source  | `REVIEWABLE_REQUEST` | `CLOSE_DEFERRED_PAYMENT` | `CREATE` | `allTasks` == `null` |
+          | source  | `REVIEWABLE_REQUEST` | `CLOSE_DEFERRED_PAYMENT` | `CREATE_WITH_TASKS` | `allTasks` != `null` |
+  
+        #### Signer Role Requirements
+          | Resource Type | ReviewableRequestType | Action |
+          |:-------------:|:-------:|:--------:|
+          | `REVIEWABLE_REQUEST` | `CLOSE_DEFERRED_PAYMENT` | `CREATE` |
+  
+        #### Tasks
+  
+        `create_deferred_payment_close_tasks:<asset_code>`
+  
+      operationId: createCloseDeferredPaymentRequestOp
+      x-item-type: operation
+      parameters:
+        - name: CreateCloseDeferredPaymentRequestOp
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/CreateCloseDeferredPaymentRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CreateCloseDeferredPaymentRequestOp'
+  /closePoll:
+    get:
+      tags:
+        - Polls
+      summary: Close Poll
+      description: |
+                    Allows to submit poll result. Only `resultProvider` can sumbit poll result
+  
+                    #### Account Role Requirements
+                      | Account | Resource Type | Rule Action |
+                      | --------|:-------------:|:-----------:|
+                      | source  | `POLL`        | `CLOSE`    |
+  
+                    #### Signer Role Requirements
+                      | Resource Type  | Rule Action |
+                      |:--------------:|:-----------:|
+                      | `POLL`         | `CLOSE`    |
+      operationId: closePoll
+      x-item-type: operation
+      parameters:
+      - name: Manage Poll Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManagePollOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManagePollResult'
+  /closeSwapOp:
+    get:
+      tags:
+        - WIP
+      summary: CloseSwap operation
+      description: |
+        Allows to lock some amount of asset on source balance with ability to send it to destination account/balance if
+        destination knows secret.
+  
+        Swap can be closed if:
+          - Lock time not reached, receiver is the source of close swap, correct secret provided
+          - Lock time reached, sender is the source of close swap, secret not provided
+          - Lock time reached, master is the source of close swap, secret not provided
+  
+        #### Account Role Requirements
+          | Account        | Resource Type | Action            |
+          | -------------  |:-------------:|:----------------: |
+          | swapSource     | `SWAP`       | `EXCHANGE`         |
+          | swapDest       | `SWAP`       | `EXCHANGE`         |
+  
+        #### Signer Role Requirements
+          | Resource Type | Rule Action  |
+          |:-------------:|:------------:|
+          | `SWAP`        | `EXCHANGE`   |
+  
+      operationId: closeSwapOp
+      x-item-type: operation
+      parameters:
+        - name: Close Swap Op
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/CloseSwapOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CloseSwapResult'
+  /createAccountOp:
+    get:
+      tags:
+        - Accounts
+      summary: Create Account
+      description: |
+                    Allows creating account with specific role and signers.
+                    Balances for assets with policy `BASE_ASSET` will be created for the account automatically. 
+                    #### Account Role Requirements
+                      | Account        | Resource Type| Action  |
+                      | ------------- |:-------------:| -----:|
+                      | source      | `ACCOUNT` | `CREATE` |
+  
+                    #### Signer Role Requirements
+                      | Resource Type | Rule Action |
+                      |:-------------:| -----------:|
+                      | `ACCOUNT`     | `CREATE`    |
+      operationId: createAccountOp
+      x-item-type: operation
+      parameters:
+      - name: Create Account Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/CreateAccountOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CreateAccountResult'
+  /createAccountSpecificRuleOp:
+    get:
+      tags:
+        - Account Specific Rules
+      summary: Create Account Specific Rule
+      description: |
+        Allows to create account specific rules.
+        Only rules for sales now supported.
+  
+        #### Account Role Requirements
+          No account rule required because only entry owner or admin can create specific rules
+  
+        #### Signer Role Requirements
+          | Resource Type | Action  |
+          |:-------------:|:-----:|
+          | `ACCOUNT_SPECIFIC_RULE` | `CREATE` |
+      operationId: createAccountSpecificRuleOp
+      x-item-type: operation
+      parameters:
+        - name: Manage Account Specific Rule Op
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/ManageAccountSpecificRuleOp'
+      responses:
+        200:
+          description: Result
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageAccountSpecificRuleResult'
+  /createAMLAlertRequestOp:
+    get:
+      tags:
+        - AMLAlert
+      summary: Create anti money laundering alert request
+      description: |
+        Anti money laundering alert request locks provided amount on target balance
+        until further investigation. On AMLAlertRequest approve locked amount is being voided.
+        Aml alert request is a reviewable request. It uses tasks - bitmask, where each bit represents conditions under which
+        request can be approved. Tasks can be set or cleared both manually(by reviewer) and automatically.
+        Tasks bit mask can be provided either from `KeyValueEntry` by key `aml_alert_create` (which specify tasks
+        for aml alert request) or field `allTasks`, then `KeyValueEntry` won't be used.
+        #### Account Role Requirements
+          | Account        | Resource Type | Reviewable Request Type | Action  | Condition |
+          | ------------- |:-------------:| -----:| -----: | -----: |
+          | source      | `REVIEWABLE_REQUEST` | `CREATE_AML_ALERT` | `CREATE`            | `allTasks` == `null` |
+          | source      | `REVIEWABLE_REQUEST` | `CREATE_AML_ALERT` | `CREATE_WITH_TASKS` | `allTasks` != `null` |
+  
+        #### Signer Role Requirements
+          | Resource Type | Reviewable Request Type | Action  |
+          |:-------------:| -----:| -----: |
+          | `REVIEWABLE_REQUEST` | `CREATE_AML_ALERT` | `CREATE` |
+      operationId: createAMLAlertRequestOp
+      x-item-type: operation
+      parameters:
+      - name: CreateAMLAlertRequestOp
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/CreateAmlAlertRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CreateAmlAlertRequestResult'
+  /createAtomicSwapAskCreationRequestOp:
+    get:
+      tags:
+        - Atomic Swap
+      summary: Create Atomic Swap Ask request
+      description: |
+        Allows to create `CREATE_ATOMIC_SWAP_ASK` request, which approving creates atomic swap ask.
+        Other accounts will have possibite to create `CREATE_ATOMIC_SWAP_BID` request for such ask to
+        buy atomic swap ask base asset for the external system currency
+  
+        #### Account Role Requirements
+          | Account | Resource Type     | Action   | Condition |
+          | --------|:-----------------:|:--------:|:---------:|
+          | source  | `ATOMIC_SWAP_ASK` | `CREATE`  | `allTasks` == `null` |
+          | source  | `ATOMIC_SWAP_ASK` | `CREATE_WITH_TASKS` | `allTasks` != `null` |
+  
+        #### Signer Role Requirements
+          | Resource Type        | ReviewableRequestType | Action  |
+          |:--------------------:|:---------------------:|:------: |
+          | `REVIEWABLE_REQUEST` | `CREATE_ATOMIC_SWAP_ASK` |`CREATE` |
+  
+      operationId: createAtomicSwapAskCreationRequestOp
+      x-item-type: operation
+      parameters:
+      - name: Create Atomic Swap Ask Creation Request Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/CreateAtomicSwapAskRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CreateAtomicSwapAskRequestResult'
+  /createAtomicSwapBidRequestOp:
+    get:
+      tags:
+        - Atomic Swap
+      summary: Create Atomic Swap Bid request
+      description: |
+        Allows to create `CREATE_ATOMIC_SWAP_BID` request, which approving means:
+          * external system currency was received by atomic swap ask owner
+          * requestor receives amout of atomic swap ask base asset
+  
+        #### Account Role Requirements
+          | Account | Resource Type | Action   |
+          | --------|:-------------:|:--------:|
+          | source  | `ASSET`       | `RECEIVE_ATOMIC_SWAP` |
+  
+        #### Signer Role Requirements
+          | Resource Type        | ReviewableRequestType | Action  |
+          |:--------------------:|:---------------------:|:------: |
+          | `REVIEWABLE_REQUEST` | `CREATE_ATOMIC_SWAP_BID` |`CREATE` |
+  
+      operationId: createAtomicSwapBidRequestOp
+      x-item-type: operation
+      parameters:
+      - name: Create Atomic Swap Bid Request Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/CreateAtomicSwapBidRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CreateAtomicSwapBidRequestResult'
+  /createChangeRoleRequestOp:
+    get:
+      tags:
+        - KYC
+      summary: Create Change Role Request
+      description: |
+                    Allows creating `CHANGE_ROLE` reviewable request.
+                    `CHANGE_ROLE` request is used to change role of account.
+  
+                    #### Account Role Requirements
+                      | Account | Resource Type | Action  | Condition |
+                      | --------|:-------------:|:-----:| ------------|
+                      | source  | `REVIEWABLE_REQUEST` | `CREATE` | `allTasks == null` && `destAccountID == source` |
+                      | source  | `REVIEWABLE_REQUEST` | `CREATE_WITH_TASKS` | `allTasks != null` \|\| `destAccountID != source` |
+  
+                    #### Signer Role Requirements
+                      | Resource Type| Action  |
+                      |:-------------:| -----:|
+                      | `REVIEWABLE_REQUEST` | `CREATE` |
+      operationId: createChangeRoleRequestOp
+      x-item-type: operation
+      parameters:
+      - name: Create Change Role Request Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/CreateChangeRoleRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CreateChangeRoleRequestResult'
+  /createCreatePollRequest:
+    get:
+      tags:
+        - Polls
+      summary: Create Request For Poll Creation
+      description: |
+                    Allows to create `CREATE_POLL` reviewable request.
+                    `CREATE_POLL` request is used to create poll entry
+  
+                    #### Account Role Requirements
+                      | Account | Resource Type        | Reviewable Request Type | Rule Action         |  Condition           |
+                      | --------|:--------------------:|:-----------------------:|:-------------------:| ------------         |
+                      | source  | `REVIEWABLE_REQUEST` | `CREATE_POLL`           | `CREATE`            | `allTasks` == `null` |
+                      | source  | `REVIEWABLE_REQUEST` | `CREATE_POLL`           | `CREATE_WITH_TASKS` | `allTasks` != `null` |
+  
+                    #### Signer Role Requirements
+                      | Resource Type        | Reviewable Request Type | Rule Action | Details |
+                      |:--------------------:|:-----------------------:|:-----------:| --------|
+                      | `REVIEWABLE_REQUEST` | `CREATE_POLL`           | `CREATE`    | Resource includes permission type of poll |
+      operationId: createCreatePollRequest
+      x-item-type: operation
+      parameters:
+      - name: Manage Create Poll Request Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManageCreatePollRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageCreatePollRequestResult'
+  /createData:
+    get:
+      tags:
+        - Data
+      summary: Create data
+      description: |
+                    Allows to create data
+  
+                    #### Account Role Requirements
+                      | Account | Resource Type | Rule Action | Details |
+                      | --------|:-------------:|:-----------:| :-----: |
+                      | source  | `DATA`        | `CREATE`    | Resource contains data type |
+  
+                    #### Signer Role Requirements
+                     | Account        | Resource Type | Rule Action        | Condition | Details |
+                     | -------------- |:-------------:|:------------------:| --------| :---: |
+                     | source         | `DATA`        | `CREATE`           | Always | Resource contains data type |
+      operationId: createData
+      x-item-type: operation
+      parameters:
+      - name: Create Data Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/CreateDataOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CreateDataResult'
+  /createDeferredPaymentCreationRequestOp:
+    get:
+      tags:
+        - Deferred payment
+      summary: Create deferred payment request
+      description: |
+        Allow to create deferred payment and allow destination to manage this deferred payment
+  
+        #### Account Role Requirements
+          | Account | Resource Type   | Reviewable Request Type | Action | Condition |
+          | --------|:---------------:|:-------:|:--------:|:-------:|
+          | source  | `REVIEWABLE_REQUEST` | `CREATE_DEFERRED_PAYMENT` | `CREATE` | `allTasks` == `null` |
+          | source  | `REVIEWABLE_REQUEST` | `CREATE_DEFERRED_PAYMENT` | `CREATE_WITH_TASKS` | `allTasks` != `null` |
+  
+        #### Signer Role Requirements
+          | Resource Type | ReviewableRequestType | Action |
+          |:-------------:|:-------:|:--------:|
+          | `REVIEWABLE_REQUEST` | `CREATE_DEFERRED_PAYMENT` | `CREATE` |
+  
+        #### Tasks
+  
+        `create_deferred_payment_creation_tasks:<asset_code>`
+  
+      operationId: createDeferredPaymentCreationRequestOp
+      x-item-type: operation
+      parameters:
+        - name: CreateDeferredPaymentCreationRequestOp
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/CreateDeferredPaymentCreationRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CreateDeferredPaymentCreationRequestResult'
+  /createIssuanceRequestOp:
+    get:
+      tags:
+        - Issuance
+      summary: Create issuance request
+      description: |
+        Allows to create request to emit provided amount of specified asset to destination balance.
+        Issuance request is a reviewable request. It uses tasks - bitmask, where each bit represents conditions under which
+        request can be approved. Tasks can be set or cleared both manually(by reviewer) and automatically.
+        Tasks bit mask can be provided either from `KeyValueEntry` by key `issuance_tasks:<asset_code>` (which specify tasks
+        for asset) or by key `issuance_tasks:*` if there are no issuance tasks for provided asset.
+        If field `allTasks` is set, `KeyValueEntry` won't be used.
+        #### Account Role Requirements
+          | Account        | Resource Type | Reviewable Request Type | Action  | Condition |
+          | ------------- |:-------------:| -----:| -----: | -----: |
+          | receiver    | `ASSET`              | `RECEIVE_ISSUANCE` | -                   | -                    |
+          | source      | `REVIEWABLE_REQUEST` | `CREATE_ISSUANCE`    | `CREATE`            | `allTasks` == `null` |
+          | source      | `REVIEWABLE_REQUEST` | `CREATE_ISSUANCE`    | `CREATE_WITH_TASKS` | `allTasks` != `null` |
+  
+        #### Signer Role Requirements
+          | Resource Type | Reviewable Request Type |Action  |
+          |:-------------:| -----:| -----: |
+          | `REVIEWABLE_REQUEST` | `CREATE_ISSUANCE` | `CREATE` |
+      operationId: createIssuanceRequestOp
+      x-item-type: operation
+      parameters:
+        - name: CreateIssuanceRequestOp
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/CreateIssuanceRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CreateIssuanceRequestResult'
+  /createKYCRecoveryRequestOp:
+    get:
+      tags:
+        - KYC
+      summary: Create KYC Recovery Request
+      description: |
+                    Allows creating `KYC_RECOVERY` reviewable request.
+                    `KYC_RECOVERY` request is used to finish account recovery, i.e. add new signers for the account.
+                    `KYC_RECOVERY` can be created by either admin, or some account. On request creation `requestor` is
+                    being set to `targetAccount`. It can be updated by `targetAccount` (providing additional kyc data)
+                    and is being reviewed by admin.
+  
+                    #### Account Role Requirements
+                      | Account | Resource Type | Action  | Condition |
+                      | --------|:-------------:|:-----:| ------------|
+                      | source  | `REVIEWABLE_REQUEST` | `CREATE` | `allTasks == null` && `targetAccount == source` |
+                      | source  | `REVIEWABLE_REQUEST` | `CREATE_WITH_TASKS` | `allTasks != null` \|\| `targetAccount == source` |
+                      | source  | `REVIEWABLE_REQUEST` | `CREATE_FOR_OTHER` | `allTasks == null` && `targetAccount != source` |
+                      | source  | `REVIEWABLE_REQUEST` | `CREATE_FOR_OTHER_WITH_TASKS` | `allTasks != null` \|\| `targetAccount != source` |
+  
+                    #### Signer Role Requirements
+                      | Resource Type| Action  |
+                      |:-------------:| -----:|
+                      | `REVIEWABLE_REQUEST` | `CREATE` |
+      operationId: createKYCRecoveryRequestOp
+      x-item-type: operation
+      parameters:
+      - name: Create KYC Recovery Request Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/CreateKycRecoveryRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CreateKycRecoveryRequestResult'
+  /createManageLimitsRequestOp:
+    get:
+      tags:
+        - Limits
+      summary: Manage LimitsUpdateRequest
+      description: |
+                    Allows either to create new `UpdateLimits` reviewable request or update existing one
+                    #### Account Role Requirements
+                      | Account        | Resource Type | Reviewable Request Type | Action  | Condition |
+                      | ------------- |:-------------:| -----:| -----: | -----: |
+                      | source      | `REVIEWABLE_REQUEST` | `UPDATE_LIMITS` | `CREATE`            | `allTasks` == `null` |
+                      | source      | `REVIEWABLE_REQUEST` | `UPDATE_LIMITS` | `CREATE_WITH_TASKS` | `allTasks` != `null` |
+  
+                    #### Signer Role Requirements
+                      | Resource Type       | Rule Action |
+                      |:-------------------:| -----------:|
+                      | `REVIEWABLE_REQUEST`| `CREATE`    |
+      operationId: createManageLimitsRequest
+      x-item-type: operation
+      parameters:
+        - name: Create Manage Limits Request
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/CreateManageLimitsRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CreateManageLimitsRequestResult'
+  /createManageOfferRequestOp:
+    get:
+      tags:
+        - Order Books
+      summary: Create manage offer request
+      description: |
+        Allows to create request to make offer in some asset pair or participate in sale.
+        ManageOffer request is a reviewable request. It uses tasks - bitmask, where each bit represents conditions under which
+        request can be approved. Tasks can be set or cleared both manually(by reviewer) and automatically.
+        Tasks bit mask can be provided from `KeyValueEntry`.
+        If field `allTasks` is set, `KeyValueEntry` won't be used.
+        #### Account Role Requirements
+         | Account        | Resource Type | Reviewable Request Type | Action  | Condition |
+         | ------------- |:-------------:| -----:| -----: | -----: |
+         | receiver    | `ASSET`              | -                   | `RECEIVE_PAYMENT`   | -                    |
+         | source      | `REVIEWABLE_REQUEST` | `MANAGE_OFFER`    | `CREATE`            | `allTasks` == `null` |
+         | source      | `REVIEWABLE_REQUEST` | `MANAGE_OFFER`    | `CREATE_WITH_TASKS` | `allTasks` != `null` |
+  
+         #### Signer Role Requirements
+         | Resource Type        | Reviewable Request Type |  Action             | Condition             |
+         |:--------------------:| :----------------------:| :-----------------: | :-------------------: |
+         | `REVIEWABLE_REQUEST` | `MANAGE_OFFER`               | `CREATE`            | `allTasks` == `null`  |
+         | `REVIEWABLE_REQUEST` | `MANAGE_OFFER`               | `CREATE_WITH_TASKS` | `allTasks` != `null`  |
+  
+        #### Related Key values
+  
+        If `allTasks' field is not set, tasks for request will be taken from one of the following key values.
+  
+        | Key    | Condition |  Description |
+        | :----: | :-------: | :----------: |
+        | `create_offer_tasks:<base>:<quote>` | `offerID` == 0 && `orderBookID` == 0 | Used to set tasks on offer creation |
+        | `remove_offer_tasks:<base>:<quote>` | `offerID` != 0 && `orderBookID` == 0 && `amount` == 0 | Used to set tasks on offer removal  |
+        | `create_sale_participation_tasks:<base>:<quote>` | `offerID` == 0 && `orderBookID` != 0| Used to set tasks on sale participation creation  |
+        | `remove_sale_participation_tasks:<base>:<quote>` | `offerID` != 0 && `orderBookID` != 0 && `amount` == 0 | Used to set tasks on sale participation removal  |
+  
+        `<base>` - order book base asset code. Usage of `*` to match any asset code is allowed.
+  
+        `<quote>` - order book quote asset code. Usage of `*` to match any asset code is allowed.
+  
+      operationId: createManageOfferRequestOp
+      x-item-type: operation
+      parameters:
+        - name: CreateManageOfferRequestOp
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/CreateManageOfferRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CreateManageOfferRequestResult'
+  /createPaymentRequestOp:
+    get:
+      tags:
+        - Payment
+      summary: Create payment request
+      description: |
+        Allows to create request to transfer some amount of asset from source balance to destination account/balance.
+        Payment request is a reviewable request. It uses tasks - bitmask, where each bit represents conditions under which
+        request can be approved. Tasks can be set or cleared both manually(by reviewer) and automatically.
+        Tasks bit mask can be provided either from `KeyValueEntry` by key `payment_tasks:<asset_code>` (which specify tasks
+        for asset) or by key `payment_tasks:*` if there are no payment tasks for provided asset.
+        If field `allTasks` is set, `KeyValueEntry` won't be used.
+        #### Account Role Requirements
+          | Account        | Resource Type | Reviewable Request Type | Action  | Condition |
+          | ------------- |:-------------:| -----:| -----: | -----: |
+          | receiver    | `ASSET`              | -                   | `RECEIVE_PAYMENT`   | -                    |
+          | source      | `REVIEWABLE_REQUEST` | `CREATE_PAYMENT`    | `CREATE`            | `allTasks` == `null` |
+          | source      | `REVIEWABLE_REQUEST` | `CREATE_PAYMENT`    | `CREATE_WITH_TASKS` | `allTasks` != `null` |
+  
+        #### Signer Role Requirements
+          | Resource Type        | Reviewable Request Type |  Action             | Condition             |
+          |:--------------------:| :----------------------:| :-----------------: | :-------------------: |
+          | `REVIEWABLE_REQUEST` | `CREATE_PAYMENT`        | `CREATE`            | `allTasks` == `null`  |
+          | `REVIEWABLE_REQUEST` | `CREATE_PAYMENT`        | `CREATE_WITH_TASKS` | `allTasks` != `null`  |
+      operationId: createPaymentRequestOp
+      x-item-type: operation
+      parameters:
+        - name: CreatePaymentRequestOp
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/CreatePaymentRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CreatePaymentRequestResult'
+  /createPreIssuanceRequestOp:
+    get:
+      tags:
+        - Issuance
+      summary: Create Pre Issuance Request
+      description: |
+                    Allows creating `CREATE_PRE_ISSUANCE` reviewable request.
+                    `CREATE_PRE_ISSUANCE` request is used to increase available for issuance amount of asset.
+  
+                    #### Account Role Requirements
+                      | Account        | Resource Type | Reviewable Request Type | Action  | Condition |
+                      | ------------- |:-------------:| -----:| -----: | -----: |
+                      | source      | `REVIEWABLE_REQUEST` | `CREATE_PRE_ISSUANCE` | `CREATE`            | `allTasks` == `null` |
+                      | source      | `REVIEWABLE_REQUEST` | `CREATE_PRE_ISSUANCE` | `CREATE_WITH_TASKS` | `allTasks` != `null` |
+  
+                    #### Signer Role Requirements
+                      No singer rule required because only asset pre issuer can do pre issuance.
+      operationId: createPreIssuanceRequestOp
+      x-item-type: operation
+      parameters:
+      - name: Create Pre Issuance Request Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/CreatePreIssuanceRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CreatePreIssuanceRequestResult'
+  /createRedemptionReviewableRequest:
+    get:
+      tags:
+        - Redemption
+      summary: Create Redemption Request
+      description: |
+                    Allows creating `REDEMPTION` reviewable request.
+                    `REDEMPTION` request is used to force redeem money from holder.
+  
+                    #### Account Role Requirements
+                      | Account | Resource Type | Action  | Condition |
+                      | --------|:-------------:|:-----:| ------------|
+                      | source  | `REVIEWABLE_REQUEST` | `CREATE` | `allTasks == null` |
+                      | source  | `REVIEWABLE_REQUEST` | `CREATE_WITH_TASKS` | `allTasks != null` |
+                      | destination  | `ASSET` | `RECEIVE_REDEMPTION` | - |
+  
+                    #### Signer Role Requirements
+                      | Resource Type| Action  |
+                      |:-------------:| -----:|
+                      | `REVIEWABLE_REQUEST` | `CREATE` |
+      operationId: createRedemptionRequestOp
+      x-item-type: operation
+      parameters:
+      - name: Create Redemption Request Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/CreateRedemptionRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CreateRedemptionRequestResult'
+  /createSaleCreationRequestOp:
+    get:
+      tags:
+        - Sale
+      summary: Create sale creation request
+      description: |
+        Allows to create reviewable request which on approval will create sale for base asset.
+        Quote assets are assets in which investments can be made.
+        Base asset is an asset being sold.
+        #### Sale types
+        There are 4 types of sale:
+        * Basic: For basic sale price of base asset is locked for every quote asset.
+           Amount of tokens distributed between participants depends on amount of contribution
+           and price of base asset in terms of quote asset in which contribution was made.
+        * Crowdfunding: prices are not set. If sale was successful (soft cap was reached),
+          all tokens (max amount to be sold) are distributed between participants according to their contributions.
+        * Fixed price: price is locked only in default quote asset.
+          Amount of tokens distributed between participants depends only on capitalization on sale close.
+        * Immediate: price is locked only in default quote asset.
+          Participants receive tokens being sold on sale immediatelly after making offer.
+          Sale is considered successful even if soft cap was not reached.
+        #### Account Role Requirements
+          | Account | Resource Type   | Reviewable Request Type | Action | Condition |
+          | --------|:---------------:|:-------:|:--------:|:-------:|
+          | source  | `REVIEWABLE_REQUEST` | `CREATE_SALE` | `CREATE` | `allTasks` == `null` |
+          | source  | `REVIEWABLE_REQUEST` | `CREATE_SALE` |`CREATE_WITH_TASKS` | `allTasks` != `null` |
+  
+        #### Signer Role Requirements
+          | Resource Type | ReviewableRequestType | Action |
+          |:-------------:|:-------:|:--------:|
+          | `REVIEWABLE_REQUEST` | `CREATE_SALE` |`CREATE` |
+  
+      operationId: createSaleRequestOp
+      x-item-type: operation
+      parameters:
+        - name: CreateSaleRequestOp
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/CreateSaleCreationRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CreateSaleCreationRequestResult'
+  /createVote:
+    get:
+      tags:
+        - Votes
+      summary: Create Vote
+      description: |
+                    Allows to create (send) vote
+  
+                    #### Account Role Requirements
+                      | Account | Resource Type | Rule Action |
+                      | --------|:-------------:|:-----------:|
+                      | source  | `VOTE`        | `CREATE`    |
+  
+                    #### Signer Role Requirements
+                     | Account        | Resource Type | Rule Action        | Condition |
+                     | -------------- |:-------------:|:------------------:| --------|
+                     | source         | `VOTE`        | `CREATE`           | Always |
+                     | resultProvider | `VOTE`        | `CREATE_FOR_OTHER` | `voteConfirmationRequired == true` |
+      operationId: createVote
+      x-item-type: operation
+      parameters:
+      - name: Manage Vote Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManageVoteOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageVoteResult'
+  /createWithdrawalRequestOp:
+    get:
+      tags:
+        - Withdrawal
+      summary: Create withdrawal request
+      description: |
+        Allows to create request to  withdraw assets from system. On request creation, withdrawn amount will be locked
+        on target balance.
+        For withdrawal reviewable request `REJECT` action is not allowed.
+        On `PERMANENT REJECT`, withdrawn amount is unlocked.
+        On `APPROVE`, tasks can be added and removed.
+        If `pendingTasks == 0` and action being performed is `APPROVE`, withdrawn amount is sent to external account.
+        Withdrawn amount is subtracted for `issued` field of the asset
+        Withdrawal request cannot be autoapproved, i.e. it's not allowed to set empty (zero tasks) in any way, either
+        through `KeyValueEntry` or on request creation(through `allTasks`).
+        #### Account Role Requirements
+          | Account        | Resource Type | Action  |
+          | ------------- |:-------------:| -----:|
+          | source      | `WITHDRAW` | `CREATE` |
+  
+        #### Signer Role Requirements
+          | Resource Type | Reviewable Request Type | Action  |
+          |:-------------:| -----:| -----: |
+          | `REVIEWABLE_REQUEST` | `CREATE_WITHDRAW` | `CREATE` |
+      operationId: createWithdrawalRequestOp
+      x-item-type: operation
+      parameters:
+      - name: CreateWithdrawalRequestOp
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/CreateWithdrawalRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CreateWithdrawalRequestResult'
+  /dataResource:
+    get:
+      tags:
+        - Data
+      x-item-type: entry
+      summary: Data Resources
+      description: |
+        Describes the data pairs as a set of properties and policies for two particular datas (i.e. base and quote datas).
+      x-code-samples:
+        - lang: "XDR"
+          source: |
+            struct DataEntry
+            {
+              //: ID of the data entry
+              uint64 id;
+              //: Numeric type, used for access control
+              uint64 type;
+              //: Value stored
+              longstring value;
+  
+              //: Creator of the entry
+              AccountID owner;
+              //: Reserved for future extension
+              EmptyExt ext;
+            };
+      operationId: dataResource
+      parameters:
+        - name: Data
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/DataEntry'
+  /feeEntryResource:
+    get:
+      tags:
+        - Fees
+      x-item-type: entry
+      summary: Fee entry resources
+      description: |
+                    Describes the fee entry which could be set by SetFeesOp.
+      x-code-samples:
+        - lang: "XDR"
+          source: |
+            //: `FeeType` represents different types of fees for different operations (e.g. fee charged on withdrawal or on investment)
+            enum FeeType
+            {
+                PAYMENT_FEE = 0,
+                OFFER_FEE = 1,
+                WITHDRAWAL_FEE = 2,
+                ISSUANCE_FEE = 3,
+                INVEST_FEE = 4, // fee to be taken while creating the sale participation
+                CAPITAL_DEPLOYMENT_FEE = 5, // fee to be taken when the sale closes
+                OPERATION_FEE = 6,
+                PAYOUT_FEE = 7,
+                ATOMIC_SWAP_SALE_FEE = 8,
+                ATOMIC_SWAP_PURCHASE_FEE = 9
+            };
+  
+            //: (not used) `EmissionFeeType` is a subtype of `ISSUANCE_FEE`
+            enum EmissionFeeType
+            {
+                PRIMARY_MARKET = 1,
+                SECONDARY_MARKET = 2
+            };
+  
+            //: `PaymentFeeType` is a subtype of the Fee used for payments
+            enum PaymentFeeType
+            {
+                OUTGOING = 1,
+                INCOMING = 2
+            };
+  
+            //: `FeeEntry` is used in the system configuration to set fees for different assets, operations (according to FeeType), particular account roles, particular accounts,
+            //: or globally (only if both parameters particular account role and paticular account are not specified).
+            struct FeeEntry
+            {
+                //: Type of a particular fee depending on the operation (e.g., PAYMENT_FEE for payment operation, WITHDRAWAL_FEE for withdrawal operation, etc.)
+                FeeType feeType;
+                //: Code of an asset used in the operation for which the fee will be charged
+                AssetCode asset;
+  
+                //: Fixed amount of fee that will be charged for the operation
+                int64 fixedFee;
+                //: Percent from the operation amount that will be charged for the corresponding operation
+                int64 percentFee;
+  
+                //: (optional) Account from which fee would be charged
+                AccountID* accountID;
+                //: (optional) Account role from which fee would be charged
+                uint64*    accountRole;
+                //: Defines a `subtype` of a fee if such exists (e.g., `OUTGOING` or `INCOMING` for `PAYMENT_FEE`)
+                int64 subtype;
+  
+                //: Defines the lower bound of operation amount for which this fee is applicable
+                int64 lowerBound;
+                //: Defines the upper bound of operation amount for which this fee is applicable
+                int64 upperBound;
+  
+                //: Hash of `type:<feeType>asset:<asset>subtype:<subtype>`
+                //: (Add `accountID:<accountID>` or `accountRole:<accountRole>` if corresponding fields are defined)
+                Hash hash;
+  
+                //: reserved for future use
+                union switch (LedgerVersion v)
+                {
+                case EMPTY_VERSION:
+                    void;
+                }
+                ext;
+            };
+      operationId: feeEntryResource
+      parameters:
+        - name: Fee Entry Resource
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/FeeEntry'
+  /initiateKYCRecoveryOp:
+    get:
+      tags:
+        - KYC
+      summary: Initiate KYC recovery
+      description: |
+                    Allows to initiate KYC recovery process. KYC recovery is the process of changing all of the account
+                    signers. `InitiateKYCRecovery` deletes all existing signers of account and creates the new one with
+                    `publicKey` provided in operation with role got by key `kyc_recovery_signer_role`.
+                    #### Account Role Requirements
+                      | Account | Resource Type           |  Rule Action      | Details |
+                      | --------|:-----------------------:|:-----------------:|:----------------------------------------:|
+                      | source  | `INITIATE_KYC_RECOVERY` | `CREATE`          | Resource includes id of the account role |
+  
+                    #### Signer Role Requirements
+                      | Resource Type           | Action   | Details                                  |
+                      |:-----------------------:|:--------:|:----------------------------------------:|
+                      | `INITIATE_KYC_RECOVERY` | `CREATE` | Resource includes id of the account role |
+      operationId: initiateKYCRecoveryOp
+      x-item-type: operation
+      parameters:
+      - name: Initiate KYC Recovery Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/InitiateKycRecoveryOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/InitiateKycRecoveryResult'
+  /keyValueSystemKeys:
+    get:
+      tags:
+        - KeyValue
+      x-item-type: entry
+      summary: Key Value System Keys
+      description: |
+                    Reserved keys (or key prefixes) which are used for system configuration.
+                    Instead of certain value `*` can be allowed and means than any parameter is appropriate.
+  
+                    Key value for reviewable request:
+                    * `change_role_tasks:<currentAccountRoleID>:<accountRoleToSet>` (`*` is allowed)
+                    * `issuance_tasks:<assetCode>` (`*` is allowed)
+                    * `withdrawal_tasks:<assetCode>` (`*` is allowed)
+                    * `preissuance_tasks:<assetCode>` (`*` is allowed)
+                    * `asset_create_tasks`
+                    * `asset_update_tasks`
+                    * `sale_create_tasks:<assetCode>` (`*` is allowed)
+                    * `sale_update_tasks:<saleID>` (`*` is allowed)
+                    * `aml_alert_create`
+                    * `limits_update_tasks`
+                    * `atomic_swap_ask_tasks`
+                    * `atomic_swap_bid_tasks:<quote_asset>` (`*` is allowed)
+                    * `create_poll_tasks:<permissionType>` (`*` is allowed)
+  
+                    Deposits:
+                    * `ext_sys_exp_period:<externalSytemType>` (`*` is NOT allowed)
+  
+                    Withdraw:
+                    * `withdraw_lower_bound:<assetCode>` (`*` is allowed)
+      x-code-samples:
+        - lang: "C++"
+          source: |
+            char const *changeRoleTasks = "change_role_tasks";
+            char const *externalSystemPrefix = "ext_sys_exp_period";
+            char const *issuanceTasksPrefix = "issuance_tasks";
+            char const *withdrawalTasksPrefix = "withdrawal_tasks";
+            char const *preIssuanceTasksPrefix = "preissuance_tasks";
+            char const *assetCreateTasks = "asset_create_tasks";
+            char const *assetUpdateTasks = "asset_update_tasks";
+            char const *saleUpdateDetailsTasksPrefix = "sale_update_tasks";
+            char const *saleCreateTasksPrefix = "sale_create_tasks";
+            char const *amlAlertCreateTasks = "aml_alert_create";
+            char const *limitsUpdateTasks = "limits_update_tasks";
+            char const *atomicSwapTasksPrefix = "atomic_swap_bid_tasks";
+            char const *atomicSwapAskTasks = "atomic_swap_ask_tasks";
+            char const *withdrawLowerBoundPrefix = "withdraw_lower_bound";
+            char const *maxSaleRulesNumbersKey = "max_sale_rules_number";
+            char const *createPollTasks = "create_poll_tasks";
+            char const *createKycRecoveryTasks = "create_kyc_recovery_tasks";
+            char const *kycRecoveryEnabled = "kyc_recovery_enabled";
+            char const *kycRecoverySignerRole = "kyc_recovery_signer_role";
+  
+      operationId: KeyValueSystemKeys
+      parameters:
+      - name: Key Value System Keys
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+  /licenseOp:
+    get:
+      tags:
+        -  Licensing
+      summary: License
+      description: |
+        License is used to increase allowed number of admins and set new due date.
+        Auxilary signatures are used to validate license authenticity.
+          #### Account Role Requirements
+          | Account        | Resource Type | Action  |
+          | ------------- |:-------------:| -----:|
+          | source      | `LICENSE` | `CREATE` |
+  
+          #### Signer Role Requirements
+          | Resource Type | Action   |
+          |:-------------:| -----:   |
+          | `LICENSE`       | `CREATE` |
+  
+      operationId: licenseOp
+      x-item-type: operation
+      parameters:
+      - name: license Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/LicenseOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/LicenseResult'
+  /manageAccountRoleOp:
+    get:
+      tags:
+        - Account Roles
+      summary: Manage Account Role
+      description: |
+                    Allows to create, update or remove account roles.
+                    #### Account Role Requirements
+                      | Account | Resource Type | Action  |
+                      | --------|:-------------:|:-----:|
+                      | source  | `ACCOUNT_ROLE` | `MANAGE` |
+  
+                    #### Signer Role Requirements
+                      | Resource Type | Action  |
+                      |:-------------:|:-----:|
+                      | `ACCOUNT_ROLE` | `MANAGE` |
+      operationId: manageAccountRoleOp
+      x-item-type: operation
+      parameters:
+      - name: Manage Account Role Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManageAccountRoleOp'
+      responses:
+        200:
+          description: Result
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageAccountRoleResult'
+  /manageAccountRuleOp:
+    get:
+      tags:
+        - Account Rules
+      summary: Manage Account Rule
+      description: |
+                    Allows to create, update or remove account rules.
+                    #### Account Role Requirements
+                      | Account | Resource Type | Action  |
+                      | --------|:-------------:|:-----:|
+                      | source  | `ACCOUNT_RULE` | `MANAGE` |
+  
+                    #### Signer Role Requirements
+                      | Resource Type | Action  |
+                      |:-------------:|:-----:|
+                      | `ACCOUNT_RULE` | `MANAGE` |
+      operationId: manageAccountRuleOp
+      x-item-type: operation
+      parameters:
+      - name: Manage Account Rule Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManageAccountRuleOp'
+      responses:
+        200:
+          description: Result
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageAccountRuleResult'
+  /manageAssetPairOp:
+    get:
+      tags:
+        - Asset Pairs
+      summary: Manage Asset Pair
+      description: |
+        Allows to create new asset pairs or update either policies or prices of the existing [asset pairs](#operation/assetPairResource).
+        #### Account Role Requirements
+          | Account        | Resource Type  | Action   |
+          | -------------  |:--------------:| --------:|
+          | source         | `ASSET_PAIR`   | `MANAGE` |
+  
+        #### Signer Role Requirements
+          | Resource Type  | Rule Action |
+          |:--------------:| -----------:|
+          | `ASSET_PAIR`   | `MANAGE`    |
+      operationId: manageAssetPairOp
+      x-item-type: operation
+      parameters:
+        - name: Manage Asset Pair Op
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/ManageAssetPairOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageAssetPairResult'
+  /manageBalanceOp:
+    get:
+      tags:
+        - Balances
+      summary: Manage Balance
+      description: |
+                    Allows to create new balance.
+  
+                    #### Account Role Requirements
+                      | Account        | Resource Type | Action            | Condition                                               |
+                      | -------------  |:-------------:|:----------------: | -                                                       |
+                      | source         | `BALANCE`     | `CREATE`          | source `accountID` is equal to destination `accountID`  |
+                      | source         | `BALANCE`     | `CREATE_FOR_OTHER`| source `accountID` differs from destination `accountID` |
+  
+                    #### Signer Role Requirements
+                      | Resource Type | Rule Action           | Condition                                               |
+                      |:-------------:| :--------------------:| -                                                       |
+                      | `BALANCE`     | `CREATE_FOR_OTHER`    | source `accountID` is equal to destination `accountID`  |
+                      | `BALANCE`     | `CREATE`              | source `accountID` differs from destination `accountID` |
+  
+      operationId: manageBalanceOp
+      x-item-type: operation
+      parameters:
+        - name: Manage Balance Op
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/ManageBalanceOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageBalanceResult'
+  /manageExternalSystemAccountIDPoolEntry:
+    get:
+      tags:
+        - External Systems
+      summary: Manage External System Pool Entry
+      description: |
+        Allows to create or remove external system account id pool entry
+        External system account id pool entry can be binded to account.
+  
+        #### Account Role Requirements
+          | Account | Resource Type | Action  |
+          | ------- |:-------------:|:------:|
+          | source  | `EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY` | `MANAGE` |
+  
+        #### Signer Role Requirements
+          | Resource Type | Action  |
+          |:-------------:|:------:|
+          | `EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY` | `MANAGE` |
+      operationId: manageExternalSystemAccountIdPoolEntry
+      x-item-type: operation
+      parameters:
+      - name: ManageExternalSystemAccountIdPoolEntryOp
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManageExternalSystemAccountIdPoolEntryOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageExternalSystemAccountIdPoolEntryResult'
+  /manageKeyValueOp:
+    get:
+      tags:
+        - KeyValue
+      summary: Manage KeyValue
+      description: |
+        Operation allows to update key-value entry on successful application
+        #### Account Role Requirements
+          | Account        | Resource Type | Action   |
+          | -------------  |:-------------:| --------:|
+          | source         | `KEY_VALUE`   | `MANAGE` |
+  
+        #### Signer Role Requirements
+          | Resource Type | Rule Action |
+          |:-------------:| -----------:|
+          | `KEY_VALUE`   | `MANAGE`    |
+      operationId: manageKeyValueOp
+      x-item-type: operation
+      parameters:
+        - name: Manage KeyValue Op
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/ManageKeyValueOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageLimitsResult'
+  /manageLimitsOp:
+    get:
+      tags:
+        - Limits
+      summary: Manage Limits Operation
+      description: |
+                    Allows to create or remove the existing limits entries.
+                    #### Account Role Requirements
+                      | Account        | Resource Type | Action   |
+                      | -------------  |:-------------:| --------:|
+                      | source         | `LIMITS_V2`   | `MANAGE` |
+  
+                    #### Signer Role Requirements
+                      | Resource Type | Rule Action |
+                      |:-------------:| -----------:|
+                      | `LIMITS_V2`   | `MANAGE`    |
+      operationId: manageLimitsOp
+      x-item-type: operation
+      parameters:
+        - name: Manage Limits Op
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/ManageLimitsOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageLimitsResult'
+  /createOffer:
+    get:
+      tags:
+        - Order Books
+      summary: Create offer
+      description: |
+        Allows to create offer with provided parameters
+        #### Account Role Requirements
+          | Account        | Resource Type | Action  |
+          | ------------- |:-------------:| -----:|
+          | source      | `OFFER_ENTRY` | `CREATE` |
+  
+  
+        #### Signer Role Requirements
+  
+          | Resource Type | Action  |
+          |:-------------:| -----:|
+          | `OFFER_ENTRY` | `CREATE` |
+  
+      operationId: createOffer
+      x-item-type: operation
+      parameters:
+        - name: ManageOfferOp
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/ManageOfferOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageOfferResult'
+  
+  /removeOffer:
+    get:
+      tags:
+        - Order Books
+      summary: Remove offer
+      description: |
+        Allows to remove offer by ID, providing `amount = 0`
+        #### Account Role Requirements
+          Only offer owner can remove existing offer
+  
+        #### Signer Role Requirements
+  
+          | Resource Type | Action  |
+          |:-------------:| -----:|
+          | `OFFER_ENTRY` | `REMOVE` |
+  
+      operationId: removeOfferOp
+      x-item-type: operation
+      parameters:
+        - name: ManageOfferOp
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/ManageOfferOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageOfferResult'
+  /createUpdateSaleDetailsRequest:
+    get:
+      tags:
+        - Sale
+      summary: Create UpdateSaleDetailsRequest
+      description: |
+        Allows to create reviewable request which after approval will update sale details
+        #### Account Role Requirements
+          | Account        | Resource Type | Reviewable Request Type | Action  | Condition |
+          | ------------- |:-------------:| -----:| -----: | -----: |
+          | source      | `REVIEWABLE_REQUEST` | `UPDATE_SALE_DETAILS` | `CREATE`            | `allTasks` == `null` |
+          | source      | `REVIEWABLE_REQUEST` | `UPDATE_SALE_DETAILS` | `CREATE_WITH_TASKS` | `allTasks` != `null` |
+  
+        #### Signer Role Requirements
+  
+          | Resource Type | Action  |
+          |:-------------:| -----:|
+          | `SALE` | `MANAGE` |
+      operationId: createUpdateSaleDetailsRequestOp
+      x-item-type: operation
+      parameters:
+      - name: ManageSaleOp
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManageSaleOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageSaleResult'
+  
+  /cancelSale:
+    get:
+      tags:
+        - Sale
+      summary: Cancel active sale
+      description: |
+        Allows to cancel sale
+        #### Account Role Requirements
+          Only sale owner or admin are able to manage sale
+        #### Signer Role Requirements
+  
+          | Resource Type | Action  |
+          |:-------------:| -----:|
+          | `SALE` | `MANAGE` |
+      operationId: cancelSaleOp
+      x-item-type: operation
+      parameters:
+      - name: ManageSaleOp
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManageSaleOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageSaleResult'
+  /manageSignerOp:
+    get:
+      tags:
+        - Signers
+      summary: Manage Signer
+      description: |
+                    Allows managing signer for source account.
+                    #### Account Role Requirements
+                      | Account | Resource Type | Action  |
+                      | --------|:-------------:|:------:|
+                      | source  | `SIGNER` | `MANAGE` |
+  
+                    #### Signer Role Requirements
+                      | Resource Type | Action  |
+                      |:-------------:| -----:|
+                      | `SIGNER` | `MANAGE` |
+      operationId: manageSignerOp
+      x-item-type: operation
+      parameters:
+      - name: Manage Signer Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManageSignerOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageSignerResult'
+  /manageSignerRoleOp:
+    get:
+      tags:
+        - Signer Roles
+      summary: Manage Signer Role
+      description: |
+                    Allows to create, update or remove signer roles.
+                    #### Account Role Requirements
+                      | Account | Resource Type | Action  |
+                      | --------|:-------------:|:-----:|
+                      | source  | `SIGNER_ROLE` | `MANAGE` |
+  
+                    #### Signer Role Requirements
+                      | Resource Type | Action  |
+                      |:-------------:|:-----:|
+                      | `SIGNER_ROLE` | `MANAGE` |
+      operationId: manageSignerRoleOp
+      x-item-type: operation
+      parameters:
+      - name: Manage Signer Role Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManageSignerRoleOp'
+      responses:
+        200:
+          description: Result
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageSignerRoleResult'
+  /manageSignerRuleOp:
+    get:
+      tags:
+        - Signer Rules
+      summary: Manage Signer Rule
+      description: |
+                    Allows to create, update or remove signer rules.
+                    #### Account Role Requirements
+                      | Account | Resource Type | Action  |
+                      | --------|:-------------:|:-----:|
+                      | source  | `SIGNER_RULE` | `MANAGE` |
+  
+                    #### Signer Role Requirements
+                      | Resource Type | Action  |
+                      |:-------------:|:-----:|
+                      | `SIGNER_RULE` | `MANAGE` |
+      operationId: manageSignerRuleOp
+      x-item-type: operation
+      parameters:
+      - name: Manage Signer Rule Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManageSignerRuleOp'
+      responses:
+        200:
+          description: Result
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageSignerRuleResult'
+  /openSwapOp:
+    get:
+      tags:
+        - WIP
+      summary: OpenSwap operation
+      description: |
+        Allows to lock some amount of asset on source balance with ability to send it to destination account/balance if
+        destination knows secret.
+  
+  
+        #### Account Role Requirements
+          | Account        | Resource Type | Action            |
+          | -------------  |:-------------:|:----------------: |
+          | source         | `SWAP`       | `EXCHANGE`         |
+          | destination    | `SWAP`       | `EXCHANGE`         |
+  
+  
+        #### Signer Role Requirements
+          | Resource Type | Rule Action  |
+          |:-------------:|:------------:|
+          | `SWAP`        | `EXCHANGE`   |
+  
+      operationId: openSwapOp
+      x-item-type: operation
+      parameters:
+        - name: Open Swap Op
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/OpenSwapOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/OpenSwapResult'
+  /paymentOp:
+    get:
+      tags:
+        - Payment
+      summary: Payment operantion
+      description: |
+        Allows to transfer some amount of asset from source balance to destination account/balance.
+  
+        #### Account Role Requirements
+          | Account        | Resource Type | Action            |
+          | -------------  |:-------------:|:----------------: |
+          | source         | `ASSET`       | `SEND`            |
+          | destination    | `ASSET`       | `RECEIVE_PAYMENT` |
+  
+        #### Signer Role Requirements
+          | Resource Type | Rule Action  |
+          |:-------------:|:------------:|
+          | `ASSET`       | `SEND`       |
+  
+      operationId: paymentOp
+      x-item-type: operation
+      parameters:
+        - name: Payment Op
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/PaymentOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/PaymentResult'
+  /removeAccountSpecificRuleOp:
+    get:
+      tags:
+        - Account Specific Rules
+      summary: Remove Account Specific Rule
+      description: |
+        Allows to remove account specific rules.
+  
+        #### Account Role Requirements
+          No account rule required because only entry owner or admin can remove specific rules
+  
+        #### Signer Role Requirements
+          | Resource Type | Action  |
+          |:-------------:|:-----:|
+          | `ACCOUNT_SPECIFIC_RULE` | `REMOVE` |
+      operationId: removeAccountSpecificRuleOp
+      x-item-type: operation
+      parameters:
+        - name: Manage Account Specific Rule Op
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/ManageAccountSpecificRuleOp'
+      responses:
+        200:
+          description: Result
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageAccountSpecificRuleResult'
+  /removeAssetOp:
+    get:
+      tags:
+        - Assets
+      summary: Remove Asset
+      description: |
+        Removes [asset](#operation/assetResource).
+        #### Account Role Requirements
+          | Account        | Resource Type  | Action   | Condition |
+          | -------------  |:--------------:| --------:| :--------:|
+          | source         | `ASSET`   | `REMOVE` | source == assetOwner |
+          | source         | `ASSET`   | `REMOVE_FOR_OTHER` | source != assetOwner |
+  
+        #### Signer Role Requirements
+          | Resource Type  | Rule Action |
+          |:--------------:| -----------:|
+          | `ASSET`   | `REMOVE` | source == assetOwner |
+          | `ASSET`   | `REMOVE_FOR_OTHER` | source != assetOwner |
+      operationId: removeAssetOp
+      x-item-type: operation
+      parameters:
+        - name: Remove Asset Op
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/RemoveAssetOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/RemoveAssetResult'
+  /removeAssetPairOp:
+    get:
+      tags:
+        - Asset Pairs
+      summary: Remove Asset Pair
+      description: |
+        Removes [asset pairs](#operation/assetPairResource).
+        #### Account Role Requirements
+          | Account        | Resource Type  | Action   |
+          | -------------  |:--------------:| --------:|
+          | source         | `ASSET_PAIR`   | `REMOVE` |
+  
+        #### Signer Role Requirements
+          | Resource Type  | Rule Action |
+          |:--------------:| -----------:|
+          | `ASSET_PAIR`   | `REMOVE`    |
+      operationId: removeAssetPairOp
+      x-item-type: operation
+      parameters:
+        - name: Remove Asset Pair Op
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/RemoveAssetPairOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/RemoveAssetPairResult'
+  /removeData:
+    get:
+      tags:
+        - Data
+      summary: Remove data
+      description: |
+                    Allows to remove data
+                    #### Account Role Requirements
+  
+                    | Account | Resource Type | Rule Action | Condition | Details |
+                    | --------|:-------------:|:-----------:| :----: |:-----: |
+                    | source  | `DATA`        | `REMOVE`    | source `accountID` is equal to data owner | Resource contains data type |
+                    | source  | `DATA`        | `REMOVE_FOR_OTHER`    | source `accountID` is **not** equal to data owner | Resource contains data type |
+  
+                    #### Signer Role Requirements
+                     | Account        | Resource Type | Rule Action        | Condition | Details |
+                     | -------------- |:-------------:|:------------------:| --------| :---: |
+                     | source         | `DATA`        | `REMOVE`           | source `accountID` is equal to data owner | Resource contains data type |
+                     | source         | `DATA`        | `REMOVE_FOR_OTHER`    | source `accountID` is **not** equal to data owner | Resource contains data type |
+      operationId: removeData
+      x-item-type: operation
+      parameters:
+      - name: Remove Data Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/RemoveDataOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/RemoveDataResult'
+  /removeVote:
+    get:
+      tags:
+        - Votes
+      summary: Remove Vote
+      description: |
+                    Allows to remove (cancel) own vote
+  
+                    #### Account Role Requirements
+                      | Account | Resource Type | Rule Action |
+                      | --------|:-------------:|:-----------:|
+                      | source  | `VOTE`        | `REMOVE`    |
+  
+                    #### Signer Role Requirements
+                     | Account | Resource Type | Rule Action |
+                     | --------|:-------------:|:-----------:|
+                     | source  | `VOTE`        | `REMOVE`    |
+      operationId: removeVote
+      x-item-type: operation
+      parameters:
+      - name: Manage Vote Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManageVoteOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageVoteResult'
+  /reviewRequestOp:
+    get:
+      tags:
+        - Requests
+      summary: Review Request
+      description: |
+        Allows to review pending reviewable requests. Operation performs specified action - `APPROVE`, `REJECT` or
+        `PERMANENT_REJECT` on request.
+        It also sets or removes tasks - bit flags.
+        For request to be fulfilled, all tasks should be cleared, i.e. field `pendingTasks` of request that is being
+        reviewed should be zero.
+        #### Account Role Requirements
+          There are no account role requirements. Only `Reviewer` can review request
+        #### Signer Role Requirements
+          | Resource Type | Action  | Details |
+          |:-------------:|:--------:| ------------- |
+          | `REVIEWABLE_REQUEST` | `REVIEW` | Reviewable request resource has subtype which should correspond to type of the request being reviewed |
+      operationId: reviewRequestOp
+      x-item-type: operation
+      parameters:
+      - name: Review Request Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ReviewRequestOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ReviewRequestResult'
+  /setFeesOp:
+    get:
+      tags:
+        - Fees
+      summary: Set Fees
+      description: |
+        Allows to set or remove relationships between [fee entries](#operation/feeEntryResource) and particular entities.
+        #### Account Role Requirements
+          | Account        | Resource Type | Action   |
+          | -------------  |:-------------:| --------:|
+          | source         | `FEE`         | `MANAGE` |
+  
+        #### Signer Role Requirements
+          | Resource Type | Rule Action |
+          |:-------------:| -----------:|
+          | `FEE`         | `MANAGE`    |
+      operationId: setFeesOp
+      x-item-type: operation
+      parameters:
+        - name: Set Fees Op
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
+            $ref: '#/components/schemas/SetFeesOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/SetFeesResult'
+  /signerRulesResources:
+    get:
+      tags:
+        - Signer Rules
+      x-item-type: entry
+      summary: Signer Rules Resources
+      description: |
+                    Describes the resources on which the signer can perform an action.
+      x-code-samples:
+        - lang: "XDR"
+          source: |
+            //: Describes properties of some entries that can be used to restrict the use of entries
+            union SignerRuleResource switch (LedgerEntryType type)
+            {
+            case REVIEWABLE_REQUEST:
+                //: Describes properties which are equal to managed reviewable request entry fields
+                struct
+                {
+                    //: Describes properties of some reviewable request types that
+                    //: can be used to restrict the using of reviewable requests
+                    ReviewableRequestResource details;
+  
+                    //: Bit mask of tasks which is allowed to add to reviewable request pending tasks
+                    uint64 tasksToAdd;
+                    //: Bit mask of tasks which is allowed to remove from reviewable request pending tasks
+                    uint64 tasksToRemove;
+                    //: Bit mask of tasks which is allowed to use as reviewable request pending tasks
+                    uint64 allTasks;
+  
+                    EmptyExt ext;
+                } reviewableRequest;
+            case ASSET:
+                //: Describes properties which are equal to managed asset entry fields
+                struct
+                {
+                    AssetCode assetCode;
+                    uint64 assetType;
+  
+                    EmptyExt ext;
+                } asset;
+            case ANY:
+                void;
+            case OFFER_ENTRY:
+                //: Describes properties which are equal to managed offer entry fields and their properties
+                struct
+                {
+                    //: type of base asset
+                    uint64 baseAssetType;
+                    //: type of quote asset
+                    uint64 quoteAssetType;
+  
+                    //: code of base asset
+                    AssetCode baseAssetCode;
+                    //: code of quote asset
+                    AssetCode quoteAssetCode;
+  
+                    bool isBuy;
+  
+                    EmptyExt ext;
+                } offer;
+            case SALE:
+                //: Describes properties which are equal to managed offer entry fields
+                struct
+                {
+                    uint64 saleID;
+                    uint64 saleType;
+  
+                    EmptyExt ext;
+                } sale;
+            case ATOMIC_SWAP_BID:
+                struct
+                {
+                    uint64 assetType;
+                    AssetCode assetCode;
+  
+                    EmptyExt ext;
+                } atomicSwapBid;
+            case SIGNER_RULE:
+                //: Describes properties which are equal to managed signer rule entry fields
+                struct
+                {
+                    //: True means that resource will be triggered if default rule is managed
+                    //: or changing of `isDefault` property for signer rule
+                    bool isDefault;
+  
+                    EmptyExt ext;
+                } signerRule;
+            case SIGNER_ROLE:
+                //: Describes properties which are equal to managed signer role entry fields
+                struct
+                {
+                    //: For signer role creating resource will be triggered if `roleID` equals `0`
+                    uint64 roleID;
+  
+                    EmptyExt ext;
+                } signerRole;
+            case SIGNER:
+                //: Describes properties which are equal to managed signer entry fields
+                struct
+                {
+                    uint64 roleID;
+  
+                    EmptyExt ext;
+                } signer;
+            case KEY_VALUE:
+                //: Describes properties which are equal to managed key value entry fields
+                struct
+                {
+                    //: prefix of key
+                    longstring keyPrefix;
+  
+                    //: reserved for future extension
+                    EmptyExt ext;
+                } keyValue;
+            default:
+                //: reserved for future extension
+                EmptyExt ext;
+            };
+      operationId: SignerRuleResource
+      parameters:
+      - name: SignerRuleResource
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/SignerRuleResource'
+  /stampOp:
+    get:
+      tags:
+        -  Licensing
+      summary: Stamp
+      description: |
+        Allows to save current license hash and currenct ledger hash for use in LicenseOp application
+          #### Account Role Requirements
+          | Account        | Resource Type | Action  |
+          | ------------- |:-------------:| -----:|
+          | source      | `STAMP` | `CREATE` |
+  
+          #### Signer Role Requirements
+          | Resource Type | Action   |
+          |:-------------:| -----:   |
+          | `STAMP`       | `CREATE` |
+  
+      operationId: stampOp
+      x-item-type: operation
+      parameters:
+      - name: stamp Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/StampOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/StampResult'
+  /transaction:
+    get:
+      x-item-type: transaction
+      tags:
+        - Transaction
+      summary: Transaction Envelope
+      description: |
+                    #### Account Role Requirements
+                      | Account        | Resource Type| Action  |
+                      | ------------- |:-------------:| -----:|
+                      | source      | `TRANSACTION` | `SEND` |
+  
+                    #### Signer Role Requirements
+                    Signers rules required on operation level.
+      operationId: transaction
+      parameters:
+      - name: Transaction
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/TransactionEnvelope'
+      responses:
+        200:
+          description: Result
+          content:
+            result:
+              schema:
+                type: object
+                $ref: '#/components/schemas/TransactionResult'
+  /updateData:
+    get:
+      tags:
+        - Data
+      summary: Update data
+      description: |
+                    Allows to update data
+  
+                    #### Account Role Requirements
+                      | Account | Resource Type | Rule Action | Condition | Details |
+                      | --------|:-------------:|:-----------:| :----: |:-----: |
+                      | source  | `DATA`        | `UPDATE`    | source `accountID` is equal to data owner | Resource contains data type |
+                      | source  | `DATA`        | `UPDATE_FOR_OTHER`    | source `accountID` is **not** equal to data owner | Resource contains data type |
+  
+                    #### Signer Role Requirements
+                     | Account        | Resource Type | Rule Action        | Condition | Details |
+                     | -------------- |:-------------:|:------------------:| --------| :---: |
+                     | source         | `DATA`        | `UPDATE`           | source `accountID` is equal to data owner | Resource contains data type |
+                     | source         | `DATA`        | `UPDATE_FOR_OTHER`    | source `accountID` is **not** equal to data owner | Resource contains data type |
+      operationId: updateData
+      x-item-type: operation
+      parameters:
+      - name: Update Data Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/UpdateDataOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/UpdateDataResult'
+  /updateMaxIssuance:
+    get:
+      tags:
+        - Assets
+      summary: Update Max Issuance
+      description: |
+                    Allows to change max issuance of asset
+                    #### Account Role Requirements
+                      | Account | Resource Type | Rule Action | Details |
+                      | --------|:-------------:| -----------:| ------------ |
+                      | source  | `ASSET`      | `UPDATE_MAX_ISSUANCE`  | Only asset owner can update max issuance of asset |
+  
+                    #### Signer Role Requirements
+                      | Resource Type | Rule Action |
+                      |:-------------:| -----------:|
+                      | `ASSET`      | `UPDATE_MAX_ISSUANCE` |
+      operationId: updateMaxIssuance
+      x-item-type: operation
+      parameters:
+      - name: Manage Asset Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManageAssetOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManageAssetResult'
+  /updatePollEndTime:
+    get:
+      tags:
+        - Polls
+      summary: Update Poll end time
+      description: |
+                    Allows update poll end time. Only admin or poll owner can update poll end time.
+  
+                    #### Account Role Requirements
+                      | Account | Resource Type | Rule Action |
+                      | --------|:-------------:|:-----------:|
+                      | source  | `POLL`        | `UPDATE_END_TIME`    |
+  
+                    #### Signer Role Requirements
+                      | Resource Type  | Rule Action |
+                      |:--------------:|:-----------:|
+                      | `POLL`         | `UPDATE_END_TIME`    |
+      operationId: updatePollEndTime
+      x-item-type: operation
+      parameters:
+      - name: Manage Poll Op
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          $ref: '#/components/schemas/ManagePollOp'
+      responses:
+        200:
+          description: Result
+          content:
+            xdr:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ManagePollResult'
