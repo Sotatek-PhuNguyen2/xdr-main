@@ -11,7 +11,7 @@ namespace stellar
 
 */
 
-struct SaleQuoteAsset {
+struct RedeemDetails {
 	uint64 redeemID;
     uint64 offerID;
 	uint64 baseAmount;
