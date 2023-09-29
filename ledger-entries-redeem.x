@@ -11,7 +11,7 @@ namespace stellar
 
 */
 
-struct RedeemDetails {
+struct RedeemDetail {
 	uint64 redeemID;
     uint64 offerID;
 	uint64 baseAmount;
@@ -40,7 +40,7 @@ struct RedeemEntry
 	int64 fee;
 
     int64 percentFee;
-
+    RedeemDetail redeemDetails<100>;
 	// price of A in terms of B
     int64 price;
 
