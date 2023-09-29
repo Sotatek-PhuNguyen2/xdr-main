@@ -93,7 +93,6 @@ enum LedgerEntryType
     ACCOUNT_LIMITS = 11,
 	ASSET_PAIR = 12,
 	OFFER_ENTRY = 13,
-    REDEEM_ENTRY = 13,
 	REVIEWABLE_REQUEST = 15,
 	EXTERNAL_SYSTEM_ACCOUNT_ID = 16,
 	SALE = 17,
@@ -120,7 +119,8 @@ enum LedgerEntryType
     DATA = 39,
     CUSTOM = 40,
     DEFERRED_PAYMENT = 41,
-    LIQUIDITY_POOL = 42
+    LIQUIDITY_POOL = 42,
+    REDEEM_ENTRY = 43,
 };
 
 // variable size as the size depends on the signature scheme used
