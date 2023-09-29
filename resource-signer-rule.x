@@ -53,6 +53,16 @@ case OFFER_ENTRY:
 
         EmptyExt ext;
     } offer;
+case REDEEM_ENTRY:
+    //: Describes properties that are equal to managed offer entry fields and their properties
+    struct
+    {
+        //: type of base asset
+        uint64 baseAmount;
+        //: type of quote asset
+        uint64 currentAmount;
+        EmptyExt ext;
+    } redeem;
 case SALE:
     //: Describes properties that are equal to managed offer entry fields
     struct

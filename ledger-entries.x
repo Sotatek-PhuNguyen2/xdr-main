@@ -12,6 +12,7 @@
 %#include "xdr/ledger-entries-reference.h"
 %#include "xdr/ledger-entries-statistics.h"
 %#include "xdr/ledger-entries-offer.h"
+%#include "xdr/ledger-entries-redeem.h"
 %#include "xdr/ledger-entries-account-limits.h"
 %#include "xdr/ledger-entries-reviewable-request.h"
 %#include "xdr/ledger-entries-external-system-id.h"
@@ -77,6 +78,8 @@ struct LedgerEntry
 		AssetPairEntry assetPair;
 	case OFFER_ENTRY:
 		OfferEntry offer;
+    case REDEEM_ENTRY:
+		RedeemEntry redeem;
 	case REVIEWABLE_REQUEST:
 		ReviewableRequestEntry reviewableRequest;
 	case EXTERNAL_SYSTEM_ACCOUNT_ID:
