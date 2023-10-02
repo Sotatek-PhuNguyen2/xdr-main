@@ -35,6 +35,8 @@ struct RedeemEntry
 	AccountID ownerID;
     AssetCode base; // A
     AssetCode quote;  // B
+    BalanceID baseBalance; 
+	BalanceID quoteBalance;`
     uint64 totalAmountRedeem;
     int64 baseAmount;
 	int64 quoteAmount;
