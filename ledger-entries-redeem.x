@@ -17,8 +17,6 @@ struct RedeemDetail {
     uint64 offerID;
     BalanceID baseBalance; 
 	BalanceID quoteBalance;
-    AssetCode base; // A
-    AssetCode quote;  // B
 	uint64 baseAmount;
     int64 quoteAmount;
 	uint64 currentAmount;
