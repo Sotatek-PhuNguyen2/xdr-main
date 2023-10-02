@@ -124,7 +124,7 @@ struct ReviewableRequestEntry {
 		case MANAGE_OFFER:
 			ManageOfferRequest manageOfferRequest;
         case MANAGE_REDEEM:
-			ManageRedeemRequest ManageRedeemRequest;
+			ManageRedeemRequest manageRedeemRequest;
 		case CREATE_PAYMENT:
 			CreatePaymentRequest createPaymentRequest;
         case PERFORM_REDEMPTION:
