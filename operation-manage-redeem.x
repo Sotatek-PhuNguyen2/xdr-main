@@ -149,11 +149,11 @@ struct ClaimRedeemAtom
     ext;
 };
 //: Contains details of successful operation application
-struct ManageOfferSuccessResult
+struct ManageRedeemSuccessResult
 {
 
     //: Offers that matched a created offer
-    ClaimOfferAtom offersClaimed<>;
+    ClaimRedeemAtom redeemsClaimed<>;
     //: Base asset of an offer
     AssetCode baseAsset;
     //: Quote asset of an offer
