@@ -12,12 +12,15 @@ namespace stellar
 */
 
 struct RedeemDetail {
+    AccountID ownerID;
 	uint64 redeemID;
     uint64 offerID;
+    BalanceID baseBalance; 
+	BalanceID quoteBalance;
 	uint64 baseAmount;
+    int64 quoteAmount;
 	uint64 currentAmount;
     uint64 createdAt;
-    uint64 updatedAt;
 	union switch (LedgerVersion v)
     {
     case EMPTY_VERSION:
@@ -32,8 +35,7 @@ struct RedeemEntry
 	AccountID ownerID;
     AssetCode base; // A
     AssetCode quote;  // B
-	BalanceID baseBalance; 
-	BalanceID quoteBalance;
+    uint64 totalAmountRedeem
     int64 baseAmount;
 	int64 quoteAmount;
 	uint64 createdAt;
