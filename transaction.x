@@ -13,6 +13,7 @@
 %#include "xdr/operation-manage-limits.h"
 %#include "xdr/operation-manage-asset-pair.h"
 %#include "xdr/operation-manage-offer.h"
+%#include "xdr/operation-manage-redeem.h"
 %#include "xdr/operation-manage-invoice-request.h"
 %#include "xdr/operation-review-request.h"
 %#include "xdr/operation-create-sale-creation-request.h"
@@ -107,6 +108,8 @@ struct Operation
 		ManageAssetPairOp manageAssetPairOp;
 	case MANAGE_OFFER:
 		ManageOfferOp manageOfferOp;
+    case MANAGE_REDEEM:
+		ManageRedeemOp manageRedeemOp;
     case MANAGE_INVOICE_REQUEST:
         ManageInvoiceRequestOp manageInvoiceRequestOp;
 	case REVIEW_REQUEST:
@@ -361,6 +364,8 @@ case opINNER:
 		ManageAssetPairResult manageAssetPairResult;
 	case MANAGE_OFFER:
 		ManageOfferResult manageOfferResult;
+    case MANAGE_REDEEM:
+        ManageRedeemResult manageRedeemResult;
 	case MANAGE_INVOICE_REQUEST:
 		ManageInvoiceRequestResult manageInvoiceRequestResult;
 	case REVIEW_REQUEST:

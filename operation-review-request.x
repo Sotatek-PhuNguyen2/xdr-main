@@ -3,6 +3,7 @@
 %#include "xdr/ledger-entries.h"
 %#include "xdr/operation-payment.h"
 %#include "xdr/operation-manage-offer.h"
+%#include "xdr/operation-manage-redeem.h"
 %#include "xdr/operation-create-redemption-request.h"
 %#include "xdr/operation-create-close-deferred-payment-request.h"
 
@@ -227,6 +228,8 @@ struct ExtendedResult {
         CreatePollExtended createPoll;
     case MANAGE_OFFER:
         ManageOfferResult manageOfferResult;
+    case MANAGE_REDEEM:
+        ManageRedeemResult manageRedeemResult;
     case CREATE_PAYMENT:
         PaymentResult paymentResult;
     case PERFORM_REDEMPTION:
