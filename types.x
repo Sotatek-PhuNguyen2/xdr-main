@@ -249,7 +249,8 @@ enum OperationType
     CANCEL_DATA_OWNER_UPDATE_REQUEST = 72,
     LP_SWAP = 73,
     LP_ADD_LIQUIDITY = 74,
-    LP_REMOVE_LIQUIDITY = 75
+    LP_REMOVE_LIQUIDITY = 75,
+    MANAGE_REDEEM = 76,
 };
 
 struct DecoratedSignature

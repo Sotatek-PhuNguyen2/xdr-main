@@ -56,7 +56,8 @@ enum ReviewableRequestType
 	DATA_REMOVE = 24,
 	CREATE_DEFERRED_PAYMENT = 25,
     CLOSE_DEFERRED_PAYMENT = 26,
-    DATA_OWNER_UPDATE = 27
+    DATA_OWNER_UPDATE = 27,
+    MANAGE_REDEEM=28,
 };
 
 struct TasksExt {
@@ -121,6 +122,8 @@ struct ReviewableRequestEntry {
             KYCRecoveryRequest kycRecoveryRequest;
 		case MANAGE_OFFER:
 			ManageOfferRequest manageOfferRequest;
+        case MANAGE_REDEEM:
+			ManageRedeemRequest ManageRedeemRequest;
 		case CREATE_PAYMENT:
 			CreatePaymentRequest createPaymentRequest;
         case PERFORM_REDEMPTION:
