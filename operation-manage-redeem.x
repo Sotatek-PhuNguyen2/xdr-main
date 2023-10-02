@@ -184,7 +184,7 @@ struct ManageRedeemSuccessResult
 };
 
 //: Result of `ManageRedeemOp`
-union ManageRedeemResult switch (ManageRedeemResult code)
+union ManageRedeemResult switch (ManageRedeemResultCode code)
 {
 case SUCCESS:
     ManageRedeemSuccessResult success;
