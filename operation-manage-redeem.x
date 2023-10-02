@@ -123,6 +123,10 @@ enum ManageRedeemEffect
 {
     //: Redeem created 
     CREATED = 0,
+    //: Redeem updated
+    UPDATED = 1,
+    //: Redeem deleted
+    DELETED = 2
 };
 
 /* This result is used when redeems are taken during an operation */
@@ -163,6 +167,9 @@ struct ManageRedeemSuccessResult
     union switch (ManageRedeemEffect effect)
     {
     case CREATED:
+    case UPDATED:
+        //: Updated redeem entry
+        RedeemEntry redeem;
     default:
         void;
     }

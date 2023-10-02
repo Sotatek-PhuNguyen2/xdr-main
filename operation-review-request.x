@@ -228,8 +228,6 @@ struct ExtendedResult {
         CreatePollExtended createPoll;
     case MANAGE_OFFER:
         ManageOfferResult manageOfferResult;
-    case MANAGE_REDEEM:
-        ManageRedeemResult manageRedeemResult;
     case CREATE_PAYMENT:
         PaymentResult paymentResult;
     case PERFORM_REDEMPTION:
