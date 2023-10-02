@@ -17,11 +17,20 @@ Result: ManageRedeemResult
 //: ManageRedeemOp is used to create redeem
 struct ManageRedeemOp
 {
+    //: Balance for base asset of an offer creator
+    BalanceID baseBalance; 
+
+    //: Balance for quote asset of an offer creator
+    BalanceID quoteBalance; 
+
     //: Base amount in base asset to buy or sell
     int64 baseAmount; 
     
      //: Current amount 
     int64 currentAmount; 
+    
+    //: Price of base asset in the ratio of quote asset
+    int64 price;
     
     //: Fee in quote asset to pay 
     int64 fee;
