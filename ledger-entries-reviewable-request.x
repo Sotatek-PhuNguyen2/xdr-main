@@ -16,6 +16,7 @@
 %#include "xdr/reviewable-request-create-poll.h"
 %#include "xdr/reviewable-request-kyc-recovery.h"
 %#include "xdr/reviewable-request-manage-offer.h"
+%#include "xdr/reviewable-request-manage-redeem.h"
 %#include "xdr/reviewable-request-payment.h"
 %#include "xdr/reviewable-request-redemption.h"
 %#include "xdr/reviewable-request-create-data.h"
