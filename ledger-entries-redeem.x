@@ -35,7 +35,7 @@ struct RedeemEntry
 	AccountID ownerID;
     AssetCode base; // A
     AssetCode quote;  // B
-    uint64 totalAmountRedeem
+    uint64 totalAmountRedeem;
     int64 baseAmount;
 	int64 quoteAmount;
 	uint64 createdAt;
