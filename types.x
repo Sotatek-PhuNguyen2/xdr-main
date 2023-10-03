@@ -120,7 +120,7 @@ enum LedgerEntryType
     CUSTOM = 40,
     DEFERRED_PAYMENT = 41,
     LIQUIDITY_POOL = 42,
-    REDEEM_ENTRY = 43,
+    REDEEM_ENTRY = 43
 };
 
 // variable size as the size depends on the signature scheme used
