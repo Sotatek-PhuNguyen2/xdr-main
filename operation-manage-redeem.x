@@ -15,7 +15,8 @@ Result: ManageRedeemResult
 
 */
 //: ManageRedeemOp is used to create redeem
-struct ManageRedeem
+struct RedeemDetail
+
 {
     //: Balance for base asset of an offer creator
     BalanceID baseBalance; 
@@ -44,8 +45,29 @@ struct ManageRedeem
 
 struct ManageRedeemOp
 {
-    ManageRedeem manageRedeem<100>;
+    RedeemDetail redeemDetails<100>;
+
+    //: ID of an account that created the matched offer
+    AccountID bAccountID;
+
+    //: ID of an redeem to be managed. 0 to create a new redeem, otherwise to edit an existing redeem
+    uint64 redeemID;
      
+    //: Balance for base asset of an offer creator
+    BalanceID baseBalance; 
+
+    //: Balance for quote asset of an offer creator
+    BalanceID quoteBalance; 
+    
+     //: amount 
+    int64 amount; 
+    
+    //: Price of base asset in the ratio of quote asset
+    int64 price;
+    
+    //: Fee in quote asset to pay 
+    int64 fee;
+
     //: Reserved for future use
     union switch (LedgerVersion v)
     {
