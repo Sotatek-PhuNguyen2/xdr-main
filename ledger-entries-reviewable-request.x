@@ -16,7 +16,6 @@
 %#include "xdr/reviewable-request-create-poll.h"
 %#include "xdr/reviewable-request-kyc-recovery.h"
 %#include "xdr/reviewable-request-manage-offer.h"
-%#include "xdr/reviewable-request-manage-redeem.h"
 %#include "xdr/reviewable-request-payment.h"
 %#include "xdr/reviewable-request-redemption.h"
 %#include "xdr/reviewable-request-create-data.h"
@@ -25,6 +24,7 @@
 %#include "xdr/reviewable-request-create-deferred-payment.h"
 %#include "xdr/reviewable-request-close-deferred-payment.h"
 %#include "xdr/reviewable-request-update-data-owner.h"
+%#include "xdr/reviewable-request-manage-redeem.h"
 
 namespace stellar
 {
@@ -58,7 +58,7 @@ enum ReviewableRequestType
 	CREATE_DEFERRED_PAYMENT = 25,
     CLOSE_DEFERRED_PAYMENT = 26,
     DATA_OWNER_UPDATE = 27,
-    MANAGE_REDEEM=28,
+    MANAGE_REDEEM = 28
 };
 
 struct TasksExt {
@@ -123,8 +123,6 @@ struct ReviewableRequestEntry {
             KYCRecoveryRequest kycRecoveryRequest;
 		case MANAGE_OFFER:
 			ManageOfferRequest manageOfferRequest;
-        case MANAGE_REDEEM:
-			ManageRedeemRequest manageRedeemRequest;
 		case CREATE_PAYMENT:
 			CreatePaymentRequest createPaymentRequest;
         case PERFORM_REDEMPTION:
@@ -141,6 +139,8 @@ struct ReviewableRequestEntry {
             CloseDeferredPaymentRequest closeDeferredPaymentRequest;
         case DATA_OWNER_UPDATE:
             DataOwnerUpdateRequest dataOwnerUpdateRequest;
+        case MANAGE_REDEEM:
+			ManageRedeemRequest manageRedeemRequest;
 
 	} body;
 
