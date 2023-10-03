@@ -15,7 +15,7 @@ Result: ManageRedeemResult
 
 */
 //: ManageRedeemOp is used to create redeem
-struct ManageRedeemOp
+struct ManageRedeem
 {
     //: Balance for base asset of an offer creator
     BalanceID baseBalance; 
@@ -40,6 +40,11 @@ struct ManageRedeemOp
     
     //: ID of an redeem to be managed. 0 to create a new redeem, otherwise to edit an existing redeem
     uint64 redeemID;
+};
+
+struct ManageRedeemOp
+{
+    ManageRedeem manageRedeem<100>;
      
     //: Reserved for future use
     union switch (LedgerVersion v)
