@@ -250,7 +250,7 @@ enum OperationType
     LP_SWAP = 73,
     LP_ADD_LIQUIDITY = 74,
     LP_REMOVE_LIQUIDITY = 75,
-    MANAGE_REDEEM = 76,
+    MANAGE_REDEEM = 76
 };
 
 struct DecoratedSignature
