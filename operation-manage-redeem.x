@@ -15,7 +15,7 @@ Result: ManageRedeemResult
 
 */
 //: ManageRedeemOp is used to create redeem
-struct RedeemDetail
+struct ManageRedeem
 
 {
     //: Balance for base asset of an offer creator
@@ -45,7 +45,7 @@ struct RedeemDetail
 
 struct ManageRedeemOp
 {
-    RedeemDetail redeemDetails<100>;
+    ManageRedeem manageRedeems<100>;
 
     //: ID of an account that created the matched offer
     AccountID bAccountID;
