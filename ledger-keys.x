@@ -113,11 +113,6 @@ case OFFER_ENTRY:
         uint64 offerID;
         AccountID ownerID;
     } offer;
-case REDEEM_ENTRY:
-    struct {
-        uint64 redeemID;
-        AccountID ownerID;
-    } redeem;
 case REVIEWABLE_REQUEST:
     struct {
         uint64 requestID;
@@ -333,5 +328,10 @@ case LIQUIDITY_POOL:
 
         EmptyExt ext;
     } liquidityPool;
+case REDEEM_ENTRY:
+    struct {
+        uint64 redeemID;
+        AccountID ownerID;
+    } redeem;
 };
 }

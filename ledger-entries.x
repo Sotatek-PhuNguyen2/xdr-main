@@ -78,8 +78,6 @@ struct LedgerEntry
 		AssetPairEntry assetPair;
 	case OFFER_ENTRY:
 		OfferEntry offer;
-    case REDEEM_ENTRY:
-		RedeemEntry redeem;
 	case REVIEWABLE_REQUEST:
 		ReviewableRequestEntry reviewableRequest;
 	case EXTERNAL_SYSTEM_ACCOUNT_ID:
@@ -128,6 +126,8 @@ struct LedgerEntry
         DeferredPaymentEntry deferredPayment;
     case LIQUIDITY_POOL:
         LiquidityPoolEntry liquidityPool;
+    case REDEEM_ENTRY:
+		RedeemEntry redeem;
     }
     data;
 
