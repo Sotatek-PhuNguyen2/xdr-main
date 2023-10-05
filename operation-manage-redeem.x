@@ -18,6 +18,8 @@ Result: ManageRedeemResult
 struct ManageRedeem
 
 {
+    AccountID ownerID;
+
     //: Balance for base asset of an offer creator
     BalanceID baseBalance; 
 
