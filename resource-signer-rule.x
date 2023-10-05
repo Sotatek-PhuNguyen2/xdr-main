@@ -196,10 +196,16 @@ case REDEEM_ENTRY:
     //: Describes properties that are equal to managed offer entry fields and their properties
     struct
     {
-        //: type of base asset
-        uint64 baseAmount;
+       //: type of base asset
+        uint64 baseAssetType;
         //: type of quote asset
-        uint64 currentAmount;
+        uint64 quoteAssetType;
+
+        //: code of base asset
+        AssetCode baseAssetCode;
+        //: code of quote asset
+        AssetCode quoteAssetCode;
+
         EmptyExt ext;
     } redeem;
 default:
