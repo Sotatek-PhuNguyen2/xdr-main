@@ -27,7 +27,10 @@ struct ManageRedeem
     BalanceID quoteBalance; 
 
     //: Base amount in base asset to buy or sell
-    int64 baseAmount; 
+    int64 baseAmount;
+
+    //: Amount in quote asset taked during the match
+    int64 quoteAmount;
     
      //: Current amount 
     int64 currentAmount; 
@@ -59,7 +62,7 @@ struct ManageRedeemOp
     BalanceID baseBalance; 
 
     //: Balance for quote asset of an offer creator
-    BalanceID quoteBalance; 
+    BalanceID quoteBalance;
     
      //: amount 
     int64 amount; 

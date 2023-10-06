@@ -38,8 +38,6 @@ struct RedeemEntry
     BalanceID baseBalance; 
 	BalanceID quoteBalance;
     uint64 totalAmountRedeem;
-    int64 baseAmount;
-	int64 quoteAmount;
 	uint64 createdAt;
 	int64 fee;
 
