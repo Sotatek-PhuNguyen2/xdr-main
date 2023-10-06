@@ -33,7 +33,7 @@ struct ManageRedeem
     int64 quoteAmount;
     
      //: Current amount 
-    int64 currentAmount; 
+    int64 currentAmount;
     
     //: Price of base asset in the ratio of quote asset
     int64 price;
