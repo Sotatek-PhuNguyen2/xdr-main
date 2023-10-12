@@ -73,6 +73,9 @@ struct ManageRedeemOp
     //: Fee in quote asset to pay 
     int64 fee;
 
+    //: ID of an orderBook to put an offer in and to find a match in
+    uint64 orderBookID;
+
     //: Reserved for future use
     union switch (LedgerVersion v)
     {
